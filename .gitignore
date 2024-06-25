@@ -79,3 +79,4 @@ crash.log
 *.test
 
 # Repository specific (add any other project-specific files/directories here)
+plugins/wasm/*.wasm
