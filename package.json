@@ -1,12 +1,21 @@
 {
   "name": "autodev",
   "version": "1.0.0",
-  "description": "",
+  "description": "AutoDev - An AI-powered development tool",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build-css": "tailwindcss -i ./static/css/input.css -o ./static/css/output.css --watch"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "keywords": ["ai", "development", "automation"],
+  "author": "OpenAgentsInc",
+  "license": "AGPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OpenAgentsInc/autodev.git"
+  },
+  "bugs": {
+    "url": "https://github.com/OpenAgentsInc/autodev/issues"
+  },
+  "homepage": "https://github.com/OpenAgentsInc/autodev#readme"
 }
