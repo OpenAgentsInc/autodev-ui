@@ -1,1 +1,81 @@
+# Go specific
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+
+# Go workspace file
+go.work
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Node.js
 node_modules/
+npm-debug.log
+yarn-error.log
+
+# Dependency directories
+vendor/
+
+# Output directories
+bin/
+dist/
+
+# Tailwind CSS
+static/css/output.css
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Templ generated files
+*_templ.go
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Log files
+*.log
+
+# Temporary files
+tmp/
+temp/
+
+# Build output
+build/
+
+# Debug files
+debug
+
+# Binaries
+autodev
+
+# Extism plugin files (uncomment if you don't want to version control these)
+# *.wasm
+
+# Crash log files
+crash.log
+
+# Test binary, built with `go test -c`
+*.test
+
+# Repository specific (add any other project-specific files/directories here)
