@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html"
 	"io"
 	"net/http"
 	"os"
@@ -151,7 +152,7 @@ func main() {
 			}
 
 			rawOutput := string(out)
-			formattedResult := fmt.Sprintf("Result for %s:\n", repository)
+			formattedResult := fmt.Sprintf("<h3>Result for %s:</h3>", repository)
 
 			// Attempt to extract JSON content
 			bodyIndex := strings.Index(rawOutput, "Body: ")
@@ -163,32 +164,42 @@ func main() {
 					switch v := responseBody.(type) {
 					case map[string]interface{}:
 						if message, ok := v["message"].(string); ok {
-							formattedResult += message
+							formattedResult += "<p>" + html.EscapeString(message) + "</p>"
 						} else {
-							formattedResult += jsonContent // Fall back to raw JSON if no message field
+							formattedResult += "<pre>" + html.EscapeString(jsonContent) + "</pre>" // Fall back to raw JSON if no message field
 						}
 					case []interface{}:
 						for _, item := range v {
 							if m, ok := item.(map[string]interface{}); ok {
 								if summary, ok := m["summary"].(string); ok {
-									formattedResult += summary + "\n\n"
+									formattedResult += "<p>" + html.EscapeString(summary) + "</p>"
 								}
 							}
 						}
+						// Append the entire JSON blob for search operations
+						if operation == "search" {
+							formattedResult += "<h4>Full JSON response:</h4>"
+							prettyJSON, err := json.MarshalIndent(v, "", "  ")
+							if err == nil {
+								formattedResult += "<pre>" + html.EscapeString(string(prettyJSON)) + "</pre>"
+							} else {
+								formattedResult += "<pre>" + html.EscapeString(jsonContent) + "</pre>" // Fall back to raw JSON if pretty printing fails
+							}
+						}
 					default:
-						formattedResult += jsonContent // Fall back to raw JSON for unexpected types
+						formattedResult += "<pre>" + html.EscapeString(jsonContent) + "</pre>" // Fall back to raw JSON for unexpected types
 					}
 				} else {
-					formattedResult += jsonContent // Fall back to raw JSON if parsing fails
+					formattedResult += "<pre>" + html.EscapeString(jsonContent) + "</pre>" // Fall back to raw JSON if parsing fails
 				}
 			} else {
-				formattedResult += rawOutput // Fall back to raw output if no JSON content found
+				formattedResult += "<pre>" + html.EscapeString(rawOutput) + "</pre>" // Fall back to raw output if no JSON content found
 			}
 
 			results = append(results, formattedResult)
 		}
 
-		combinedResult := strings.Join(results, "\n\n")
+		combinedResult := strings.Join(results, "<hr>")
 		return c.HTML(http.StatusOK, "<div>"+combinedResult+"</div>")
 	})
 
