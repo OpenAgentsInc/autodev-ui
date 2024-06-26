@@ -1,67 +1,20 @@
 package views
 
-templ ThreadList() {
-	<div class="h-full overflow-y-auto border-r border-gray-800 p-4">
-		<form hx-post="/run-plugin" hx-target="#result" class="space-y-4">
-			<select name="operation" class="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded">
-				<option value="index">Index</option>
-				<option value="query">Query</option>
-				<option value="search">Search</option>
-			</select>
-			<select name="repositories" multiple class="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded">
-				<option value="openagentsinc/kb-wanix">openagentsinc/kb-wanix</option>
-				<option value="openagentsinc/plugin-greptile">openagentsinc/plugin-greptile</option>
-				<option value="openagentsinc/openagents">openagentsinc/openagents</option>
-			</select>
-			<input type="text" name="branch" placeholder="Branch (default: main)" class="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded"/>
-			<input type="text" name="query" placeholder="Query or search term" class="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded"/>
-			<button type="submit" class="w-full p-2 bg-blue-600 hover:bg-blue-700 text-white rounded">Run Plugin</button>
-		</form>
-		// TODO: Add thread list items here
-	</div>
-}
-
-templ MessageList() {
-	<div class="h-full overflow-y-auto border-r border-gray-800 p-4">
-		<div id="result" class="mt-4 p-4 bg-gray-800 rounded whitespace-pre-line break-words"></div>
-	</div>
-}
-
-templ AgentWorkspace() {
-	<div class="h-full w-full">
-		<iframe src="https://wanix.openagents.com" class="w-full h-full border-0" frameborder="0"></iframe>
-	</div>
-}
-
 templ Index(cssVersion string) {
 	<html>
 		<head>
-			<title>AutoDev</title>
-			<script src="https://unpkg.com/htmx.org@1.9.2"></script>
+			<title>AutoDev - GitHubFS</title>
 			<link href={ "/static/css/output.css?" + cssVersion } rel="stylesheet"/>
 		</head>
-		<body class="bg-black text-white font-mono">
-			<div class="flex h-screen">
-				<div class="w-1/5">
-					@ThreadList()
-				</div>
-				<div class="w-3/5 overflow-x-none">
-					@MessageList()
-				</div>
-				<div class="w-1/5">
-					@AgentWorkspace()
-				</div>
+		<body class="bg-black text-white font-mono h-screen w-screen">
+			<div class="flex flex-col h-full">
+				<header class="p-4">
+					<h1 class="text-2xl">AutoDev GitHubFS test</h1>
+				</header>
+				<main class="flex-grow p-4">
+					<!-- GitHubFS UI will go here -->
+				</main>
 			</div>
-			<script>
-                document.querySelector('select[name="operation"]').addEventListener('change', function() {
-                    var queryInput = document.querySelector('input[name="query"]');
-                    if (this.value === 'index') {
-                        queryInput.style.display = 'none';
-                    } else {
-                        queryInput.style.display = 'block';
-                    }
-                });
-            </script>
 		</body>
 	</html>
 }

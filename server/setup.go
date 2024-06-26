@@ -30,6 +30,12 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 		})
 	})
 
+	e.GET("/greptile", func(c echo.Context) error {
+		return c.Render(http.StatusOK, "greptile", map[string]interface{}{
+			"CssVersion": cssVersion,
+		})
+	})
+
 	e.POST("/run-plugin", func(c echo.Context) error {
 		input := plugins.PluginInput{
 			Operation:   c.FormValue("operation"),
@@ -58,10 +64,15 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 type TemplRenderer struct{}
 
 func (t *TemplRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-	if viewContext, ok := data.(map[string]interface{}); ok {
-		if cssVersion, ok := viewContext["CssVersion"].(string); ok {
-			return views.Index(cssVersion).Render(context.Background(), w)
-		}
+	viewContext, _ := data.(map[string]interface{})
+	cssVersion, _ := viewContext["CssVersion"].(string)
+
+	switch name {
+	case "index":
+		return views.Index(cssVersion).Render(context.Background(), w)
+	case "greptile":
+		return views.Greptile(cssVersion).Render(context.Background(), w)
+	default:
+		return fmt.Errorf("unknown template: %s", name)
 	}
-	return views.Index("").Render(context.Background(), w)
 }
