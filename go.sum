@@ -45,3 +45,5 @@ golang.org/x/time v0.5.0 h1:o7cqy6amK/52YcAKIPlM3a+Fpj35zvRj2TP+e1xFSfk=
 golang.org/x/time v0.5.0/go.mod h1:3BpzKBy/shNhVucY/MWOyx10tF3SFh9QdLuxbVysPQM=
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
 gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
+tractor.dev/toolkit-go v0.0.0-20240304053737-324323efde45 h1:oqj8N5C0kA8xESdsOfpWBeg1UJM6Fvp/SOtCpGuXnJE=
+tractor.dev/toolkit-go v0.0.0-20240304053737-324323efde45/go.mod h1:gteH4mWzJV+Y5zk6/Q6rPuWeOCFHnr55XPTgYEHuzUo=
