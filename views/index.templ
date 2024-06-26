@@ -41,12 +41,12 @@ templ AgentWorkspace() {
 	</div>
 }
 
-templ Index() {
+templ Index(cssVersion string) {
 	<html>
 		<head>
 			<title>AutoDev</title>
 			<script src="https://unpkg.com/htmx.org@1.9.2"></script>
-			<link href="/static/css/output.css" rel="stylesheet"/>
+			<link href={ "/static/css/output.css?" + cssVersion } rel="stylesheet"/>
 		</head>
 		<body class="bg-black text-white font-mono">
 			<div class="flex h-screen">

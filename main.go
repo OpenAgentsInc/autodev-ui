@@ -19,7 +19,20 @@ import (
 type TemplRenderer struct{}
 
 func (t *TemplRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-	return views.Index().Render(context.Background(), w)
+	if viewContext, ok := data.(map[string]interface{}); ok {
+		if cssVersion, ok := viewContext["CssVersion"].(string); ok {
+			return views.Index(cssVersion).Render(context.Background(), w)
+		}
+	}
+	// Fallback to rendering without cssVersion if it's not provided
+	return views.Index("").Render(context.Background(), w)
+}
+
+var cssVersion string
+
+func init() {
+	// Generate a new version string each time the server starts
+	cssVersion = fmt.Sprintf("v=%d", time.Now().Unix())
 }
 
 func main() {
@@ -55,7 +68,9 @@ func main() {
 	defer plugin.Close()
 
 	e.GET("/", func(c echo.Context) error {
-		return c.Render(http.StatusOK, "index", nil)
+		return c.Render(http.StatusOK, "index", map[string]interface{}{
+			"CssVersion": cssVersion,
+		})
 	})
 
 	e.POST("/run-plugin", func(c echo.Context) error {
