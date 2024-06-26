@@ -23,7 +23,7 @@ templ ThreadList() {
 
 templ MessageList() {
 	<div class="h-full overflow-y-auto border-r border-gray-800 p-4">
-		<div id="result" class="mt-4 p-4 bg-gray-800 rounded"></div>
+		<div id="result" class="mt-4 p-4 bg-gray-800 rounded whitespace-pre-line break-words"></div>
 	</div>
 }
 
@@ -45,10 +45,10 @@ templ Index(cssVersion string) {
 				<div class="w-1/5">
 					@ThreadList()
 				</div>
-				<div class="w-2/5">
+				<div class="w-3/5 overflow-x-none">
 					@MessageList()
 				</div>
-				<div class="w-2/5">
+				<div class="w-1/5">
 					@AgentWorkspace()
 				</div>
 			</div>

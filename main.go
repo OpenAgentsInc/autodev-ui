@@ -150,24 +150,42 @@ func main() {
 				continue
 			}
 
-			bodyIndex := strings.Index(string(out), "Body: ")
-			if bodyIndex == -1 {
-				results = append(results, fmt.Sprintf("Unexpected response format for %s", repository))
-				continue
-			}
-			jsonContent := string(out)[bodyIndex+6:]
+			rawOutput := string(out)
+			formattedResult := fmt.Sprintf("Result for %s:\n", repository)
 
-			var response map[string]interface{}
-			if err := json.Unmarshal([]byte(jsonContent), &response); err != nil {
-				results = append(results, fmt.Sprintf("Failed to parse response for %s: %s", repository, err.Error()))
-				continue
-			}
-
-			if message, ok := response["message"].(string); ok {
-				results = append(results, fmt.Sprintf("Summary for %s:\n%s", repository, message))
+			// Attempt to extract JSON content
+			bodyIndex := strings.Index(rawOutput, "Body: ")
+			if bodyIndex != -1 {
+				jsonContent := rawOutput[bodyIndex+6:]
+				var responseBody interface{} // Use interface{} to handle both array and object responses
+				if err := json.Unmarshal([]byte(jsonContent), &responseBody); err == nil {
+					// JSON parsing successful
+					switch v := responseBody.(type) {
+					case map[string]interface{}:
+						if message, ok := v["message"].(string); ok {
+							formattedResult += message
+						} else {
+							formattedResult += jsonContent // Fall back to raw JSON if no message field
+						}
+					case []interface{}:
+						for _, item := range v {
+							if m, ok := item.(map[string]interface{}); ok {
+								if summary, ok := m["summary"].(string); ok {
+									formattedResult += summary + "\n\n"
+								}
+							}
+						}
+					default:
+						formattedResult += jsonContent // Fall back to raw JSON for unexpected types
+					}
+				} else {
+					formattedResult += jsonContent // Fall back to raw JSON if parsing fails
+				}
 			} else {
-				results = append(results, fmt.Sprintf("No summary available for %s", repository))
+				formattedResult += rawOutput // Fall back to raw output if no JSON content found
 			}
+
+			results = append(results, formattedResult)
 		}
 
 		combinedResult := strings.Join(results, "\n\n")
