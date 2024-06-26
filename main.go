@@ -189,7 +189,7 @@ func main() {
 		}
 
 		combinedResult := strings.Join(results, "\n\n")
-		return c.HTML(http.StatusOK, "<pre>"+combinedResult+"</pre>")
+		return c.HTML(http.StatusOK, "<div>"+combinedResult+"</div>")
 	})
 
 	e.Logger.Fatal(e.Start(":8080"))
