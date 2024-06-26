@@ -2,17 +2,20 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/OpenAgentsInc/autodev/views"
 	"github.com/extism/go-sdk"
+	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
-// Templ renderer
 type TemplRenderer struct{}
 
 func (t *TemplRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
@@ -20,19 +23,17 @@ func (t *TemplRenderer) Render(w io.Writer, name string, data interface{}, c ech
 }
 
 func main() {
-	e := echo.New()
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println("Error loading .env file")
+	}
 
-	// Add logging middleware
+	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-
-	// Set up Templ renderer
 	e.Renderer = &TemplRenderer{}
-
-	// Serve static files
 	e.Static("/static", "static")
 
-	// Load the Extism plugin
 	manifest := extism.Manifest{
 		Wasm: []extism.Wasm{
 			extism.WasmFile{
@@ -53,36 +54,84 @@ func main() {
 	}
 	defer plugin.Close()
 
-	// Define routes
 	e.GET("/", func(c echo.Context) error {
-		e.Logger.Info("Rendering index template")
 		return c.Render(http.StatusOK, "index", nil)
 	})
 
 	e.POST("/run-plugin", func(c echo.Context) error {
 		operation := c.FormValue("operation")
-		input := c.FormValue("input")
+		repository := c.FormValue("repository")
+		query := c.FormValue("query")
 
-		e.Logger.Infof("Running plugin with operation: %s, input: %s", operation, input)
+		apiKey := os.Getenv("GREPTILE_API_KEY")
+		githubToken := os.Getenv("GITHUB_TOKEN")
 
-		// Prepare input for the plugin
-		pluginInput := fmt.Sprintf(`{"operation":"%s","repository":"%s"}`, operation, input)
+		if apiKey == "" || githubToken == "" {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "API key or GitHub token not set"})
+		}
 
-		// Call the plugin
-		exitCode, out, err := plugin.Call("run", []byte(pluginInput))
+		var pluginInput map[string]interface{}
+
+		switch operation {
+		case "index":
+			pluginInput = map[string]interface{}{
+				"operation":    operation,
+				"repository":   repository,
+				"remote":       "github",
+				"branch":       "main",
+				"api_key":      apiKey,
+				"github_token": githubToken,
+			}
+		case "query":
+			pluginInput = map[string]interface{}{
+				"operation":    operation,
+				"repository":   repository,
+				"remote":       "github",
+				"branch":       "main",
+				"api_key":      apiKey,
+				"github_token": githubToken,
+				"messages": []map[string]string{
+					{
+						"id":      "1",
+						"content": query,
+						"role":    "user",
+					},
+				},
+				"session_id": fmt.Sprintf("session-%d", time.Now().Unix()),
+				"stream":     false,
+				"genius":     true,
+			}
+		case "search":
+			pluginInput = map[string]interface{}{
+				"operation":    operation,
+				"repository":   repository,
+				"remote":       "github",
+				"branch":       "main",
+				"api_key":      apiKey,
+				"github_token": githubToken,
+				"query":        query,
+				"session_id":   fmt.Sprintf("session-%d", time.Now().Unix()),
+				"stream":       false,
+			}
+		default:
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid operation"})
+		}
+
+		pluginInputJSON, err := json.Marshal(pluginInput)
 		if err != nil {
-			e.Logger.Errorf("Plugin call error: %v", err)
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to prepare plugin input"})
+		}
+
+		exitCode, out, err := plugin.Call("run", pluginInputJSON)
+		if err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		}
 		if exitCode != 0 {
-			e.Logger.Errorf("Plugin exited with non-zero code: %d", exitCode)
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("Plugin exited with code %d", exitCode)})
 		}
 
-		e.Logger.Infof("Plugin call successful, output: %s", string(out))
 		return c.JSON(http.StatusOK, map[string]string{"result": string(out)})
 	})
 
-	// Start the server
 	e.Logger.Fatal(e.Start(":8080"))
 }
