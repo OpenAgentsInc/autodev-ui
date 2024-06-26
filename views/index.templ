@@ -1,15 +1,7 @@
 package views
 
 templ ThreadList() {
-	<div class="h-full overflow-y-auto border-r border-gray-800">
-		<h2 class="text-xl font-bold mb-4 p-4">Threads</h2>
-		// TODO: Add thread list items here
-	</div>
-}
-
-templ MessageList() {
 	<div class="h-full overflow-y-auto border-r border-gray-800 p-4">
-		<h2 class="text-xl font-bold mb-4">Messages</h2>
 		<form hx-post="/run-plugin" hx-target="#result" class="space-y-4">
 			<select name="operation" class="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded">
 				<option value="index">Index</option>
@@ -21,6 +13,12 @@ templ MessageList() {
 			<input type="text" name="query" placeholder="Query or search term" class="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded"/>
 			<button type="submit" class="w-full p-2 bg-blue-600 hover:bg-blue-700 text-white rounded">Run Plugin</button>
 		</form>
+		// TODO: Add thread list items here
+	</div>
+}
+
+templ MessageList() {
+	<div class="h-full overflow-y-auto border-r border-gray-800 p-4">
 		<div id="result" class="mt-4 p-4 bg-gray-800 rounded"></div>
 	</div>
 }
