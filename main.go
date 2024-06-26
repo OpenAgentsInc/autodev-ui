@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/OpenAgentsInc/autodev/views"
@@ -24,14 +25,12 @@ func (t *TemplRenderer) Render(w io.Writer, name string, data interface{}, c ech
 			return views.Index(cssVersion).Render(context.Background(), w)
 		}
 	}
-	// Fallback to rendering without cssVersion if it's not provided
 	return views.Index("").Render(context.Background(), w)
 }
 
 var cssVersion string
 
 func init() {
-	// Generate a new version string each time the server starts
 	cssVersion = fmt.Sprintf("v=%d", time.Now().Unix())
 }
 
@@ -75,78 +74,106 @@ func main() {
 
 	e.POST("/run-plugin", func(c echo.Context) error {
 		operation := c.FormValue("operation")
-		repository := c.FormValue("repository")
+		repositories := c.Request().Form["repositories"]
+		branch := c.FormValue("branch")
+		if branch == "" {
+			branch = "main"
+		}
 		query := c.FormValue("query")
 
 		apiKey := os.Getenv("GREPTILE_API_KEY")
 		githubToken := os.Getenv("GITHUB_TOKEN")
-
 		if apiKey == "" || githubToken == "" {
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "API key or GitHub token not set"})
 		}
 
-		var pluginInput map[string]interface{}
-
-		switch operation {
-		case "index":
-			pluginInput = map[string]interface{}{
-				"operation":    operation,
-				"repository":   repository,
-				"remote":       "github",
-				"branch":       "main",
-				"api_key":      apiKey,
-				"github_token": githubToken,
-			}
-		case "query":
-			pluginInput = map[string]interface{}{
-				"operation":    operation,
-				"repository":   repository,
-				"remote":       "github",
-				"branch":       "main",
-				"api_key":      apiKey,
-				"github_token": githubToken,
-				"messages": []map[string]string{
-					{
-						"id":      "1",
-						"content": query,
-						"role":    "user",
+		var results []string
+		for _, repository := range repositories {
+			var pluginInput map[string]interface{}
+			switch operation {
+			case "index":
+				pluginInput = map[string]interface{}{
+					"operation":    operation,
+					"repository":   repository,
+					"remote":       "github",
+					"branch":       branch,
+					"api_key":      apiKey,
+					"github_token": githubToken,
+				}
+			case "query":
+				pluginInput = map[string]interface{}{
+					"operation":    operation,
+					"repository":   repository,
+					"remote":       "github",
+					"branch":       branch,
+					"api_key":      apiKey,
+					"github_token": githubToken,
+					"messages": []map[string]string{
+						{
+							"id":      "1",
+							"content": query,
+							"role":    "user",
+						},
 					},
-				},
-				"session_id": fmt.Sprintf("session-%d", time.Now().Unix()),
-				"stream":     false,
-				"genius":     true,
+					"session_id": fmt.Sprintf("session-%d", time.Now().Unix()),
+					"stream":     false,
+					"genius":     true,
+				}
+			case "search":
+				pluginInput = map[string]interface{}{
+					"operation":    operation,
+					"repository":   repository,
+					"remote":       "github",
+					"branch":       branch,
+					"api_key":      apiKey,
+					"github_token": githubToken,
+					"query":        query,
+					"session_id":   fmt.Sprintf("session-%d", time.Now().Unix()),
+					"stream":       false,
+				}
+			default:
+				return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid operation"})
 			}
-		case "search":
-			pluginInput = map[string]interface{}{
-				"operation":    operation,
-				"repository":   repository,
-				"remote":       "github",
-				"branch":       "main",
-				"api_key":      apiKey,
-				"github_token": githubToken,
-				"query":        query,
-				"session_id":   fmt.Sprintf("session-%d", time.Now().Unix()),
-				"stream":       false,
+
+			pluginInputJSON, err := json.Marshal(pluginInput)
+			if err != nil {
+				return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to prepare plugin input"})
 			}
-		default:
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid operation"})
+
+			exitCode, out, err := plugin.Call("run", pluginInputJSON)
+			if err != nil {
+				results = append(results, fmt.Sprintf("Error for %s: %s", repository, err.Error()))
+				continue
+			}
+			if exitCode != 0 {
+				results = append(results, fmt.Sprintf("Plugin exited with code %d for %s", exitCode, repository))
+				continue
+			}
+
+			bodyIndex := strings.Index(string(out), "Body: ")
+			if bodyIndex == -1 {
+				results = append(results, fmt.Sprintf("Unexpected response format for %s", repository))
+				continue
+			}
+			jsonContent := string(out)[bodyIndex+6:]
+
+			var response map[string]interface{}
+			if err := json.Unmarshal([]byte(jsonContent), &response); err != nil {
+				results = append(results, fmt.Sprintf("Failed to parse response for %s: %s", repository, err.Error()))
+				continue
+			}
+
+			if message, ok := response["message"].(string); ok {
+				results = append(results, fmt.Sprintf("Summary for %s:\n%s", repository, message))
+			} else {
+				results = append(results, fmt.Sprintf("No summary available for %s", repository))
+			}
 		}
 
-		pluginInputJSON, err := json.Marshal(pluginInput)
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to prepare plugin input"})
-		}
-
-		exitCode, out, err := plugin.Call("run", pluginInputJSON)
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
-		}
-		if exitCode != 0 {
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("Plugin exited with code %d", exitCode)})
-		}
-
-		return c.JSON(http.StatusOK, map[string]string{"result": string(out)})
+		combinedResult := strings.Join(results, "\n\n")
+		return c.HTML(http.StatusOK, "<pre>"+combinedResult+"</pre>")
 	})
 
 	e.Logger.Fatal(e.Start(":8080"))
 }
+
