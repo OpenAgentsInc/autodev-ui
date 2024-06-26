@@ -7,12 +7,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/OpenAgentsInc/autodev/config"
-	"github.com/OpenAgentsInc/autodev/plugins"
-	"github.com/OpenAgentsInc/autodev/views"
 	"github.com/extism/go-sdk"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/openagentsinc/autodev/config"
+	"github.com/openagentsinc/autodev/plugins"
+	"github.com/openagentsinc/autodev/views"
 )
 
 func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {

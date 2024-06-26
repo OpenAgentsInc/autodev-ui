@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/OpenAgentsInc/autodev/config"
-	"github.com/OpenAgentsInc/autodev/plugins"
-	"github.com/OpenAgentsInc/autodev/server"
+	"github.com/openagentsinc/autodev/config"
+	"github.com/openagentsinc/autodev/plugins"
+	"github.com/openagentsinc/autodev/server"
 )
 
 func main() {

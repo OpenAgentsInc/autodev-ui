@@ -1,4 +1,4 @@
-module github.com/OpenAgentsInc/autodev
+module github.com/openagentsinc/autodev
 
 go 1.22.1
 
