@@ -8,7 +8,11 @@ templ ThreadList() {
 				<option value="query">Query</option>
 				<option value="search">Search</option>
 			</select>
-			<input type="text" name="repository" placeholder="Repository (e.g., username/repo)" class="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded"/>
+			<select name="repositories" multiple class="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded">
+				<option value="openagentsinc/kb-wanix">openagentsinc/kb-wanix</option>
+				<option value="openagentsinc/plugin-greptile">openagentsinc/plugin-greptile</option>
+				<option value="openagentsinc/openagents">openagentsinc/openagents</option>
+			</select>
 			<input type="text" name="branch" placeholder="Branch (default: main)" class="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded"/>
 			<input type="text" name="query" placeholder="Query or search term" class="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded"/>
 			<button type="submit" class="w-full p-2 bg-blue-600 hover:bg-blue-700 text-white rounded">Run Plugin</button>
