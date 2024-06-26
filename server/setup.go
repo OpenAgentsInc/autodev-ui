@@ -25,8 +25,10 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 	cssVersion := fmt.Sprintf("v=%d", time.Now().Unix())
 
 	e.GET("/", func(c echo.Context) error {
+		repo := c.QueryParam("repo")
 		return c.Render(http.StatusOK, "index", map[string]interface{}{
 			"CssVersion": cssVersion,
+			"Repo":       repo,
 		})
 	})
 
@@ -66,10 +68,11 @@ type TemplRenderer struct{}
 func (t *TemplRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
 	viewContext, _ := data.(map[string]interface{})
 	cssVersion, _ := viewContext["CssVersion"].(string)
+	repo, _ := viewContext["Repo"].(string)
 
 	switch name {
 	case "index":
-		return views.Index(cssVersion).Render(context.Background(), w)
+		return views.Index(cssVersion, repo).Render(context.Background(), w)
 	case "greptile":
 		return views.Greptile(cssVersion).Render(context.Background(), w)
 	default:

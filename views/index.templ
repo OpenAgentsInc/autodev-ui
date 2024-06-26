@@ -1,6 +1,6 @@
 package views
 
-templ Index(cssVersion string) {
+templ Index(cssVersion string, repo string) {
 	<html>
 		<head>
 			<title>AutoDev - GitHubFS</title>
@@ -9,9 +9,20 @@ templ Index(cssVersion string) {
 		<body class="bg-black text-white font-mono h-screen w-screen">
 			<div class="flex flex-col h-full">
 				<header class="p-4">
-					<h1 class="text-2xl">AutoDev GitHubFS test</h1>
+					<h1 class="text-2xl">AutoDev GitHubFS</h1>
+					if repo != "" {
+						<p class="mt-2">Current repository: { repo }</p>
+					} else {
+						<p class="mt-2">No repository specified. Use ?repo=owner/name in the URL.</p>
+					}
 				</header>
 				<main class="flex-grow p-4">
+					if repo == "" {
+						<form action="/" method="get" class="mt-4">
+							<input type="text" name="repo" placeholder="owner/repo" class="p-2 bg-gray-800 text-white rounded"/>
+							<button type="submit" class="ml-2 p-2 bg-blue-600 rounded">Load Repository</button>
+						</form>
+					}
 					<!-- GitHubFS UI will go here -->
 				</main>
 			</div>
