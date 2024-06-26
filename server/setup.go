@@ -31,7 +31,7 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 	})
 
 	e.POST("/run-plugin", func(c echo.Context) error {
-		input := plugin.PluginInput{
+		input := plugins.PluginInput{
 			Operation:   c.FormValue("operation"),
 			Repository:  c.FormValue("repository"),
 			Query:       c.FormValue("query"),
@@ -39,12 +39,12 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 			GithubToken: cfg.GithubToken,
 		}
 
-		pluginInputJSON, err := plugin.PreparePluginInput(input)
+		pluginInputJSON, err := plugins.PreparePluginInput(input)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 		}
 
-		result, err := plugin.CallPlugin(extismPlugin, pluginInputJSON)
+		result, err := plugins.CallPlugin(extismPlugin, pluginInputJSON)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		}
@@ -65,4 +65,3 @@ func (t *TemplRenderer) Render(w io.Writer, name string, data interface{}, c ech
 	}
 	return views.Index("").Render(context.Background(), w)
 }
-
