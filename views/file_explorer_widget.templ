@@ -6,7 +6,7 @@ import (
 )
 
 templ FileExplorerWidget(repo string, branches []string, currentBranch string) {
-	<div class="bg-gray-800 rounded-lg shadow-lg w-96 h-[600px] flex flex-col">
+	<div class="bg-gray-800 rounded-lg shadow-lg w-full min-h-[600px] h-full flex flex-col">
 		<div class="p-4 bg-gray-700 rounded-t-lg flex justify-between items-center">
 			<h2 class="text-lg font-semibold text-white">{ repo }</h2>
 			<select
