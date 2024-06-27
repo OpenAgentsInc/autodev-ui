@@ -20,7 +20,7 @@ templ Explorer(cssVersion string, repo string, branches []string) {
 						<li>
 							<button
 								class="w-full text-left p-2 hover:bg-gray-800"
-								hx-get={ "/explorer/" + repo + "/list?branch=" + branch }
+								hx-get={ "/explorer/list?repo=" + repo + "&branch=" + branch }
 								hx-target="#file-tree"
 							>{ branch }</button>
 						</li>
@@ -42,7 +42,7 @@ templ DirectoryList(entries []fs.FileInfo, path string, branch string, repo stri
 				if entry.IsDir() {
 					<button
 						class="flex items-center"
-						hx-get={ "/explorer/" + repo + "/list?branch=" + branch + "&path=" + filepath.Join(path, entry.Name()) }
+						hx-get={ "/explorer/list?repo=" + repo + "&branch=" + branch + "&path=" + filepath.Join(path, entry.Name()) }
 						hx-target="next .nested-list"
 					>
 						<span class="mr-2">📁</span>{ entry.Name() }
@@ -51,7 +51,7 @@ templ DirectoryList(entries []fs.FileInfo, path string, branch string, repo stri
 				} else {
 					<button
 						class="flex items-center"
-						hx-get={ "/explorer/" + repo + "/file?branch=" + branch + "&path=" + filepath.Join(path, entry.Name()) }
+						hx-get={ "/explorer/file?repo=" + repo + "&branch=" + branch + "&path=" + filepath.Join(path, entry.Name()) }
 						hx-target="#file-content"
 					>
 						<span class="mr-2">📄</span>{ entry.Name() }

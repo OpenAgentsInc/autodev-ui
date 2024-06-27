@@ -63,8 +63,11 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 		return c.Render(http.StatusOK, "index", data)
 	})
 
-	e.GET("/explorer/:repo", func(c echo.Context) error {
-		repo := c.Param("repo")
+	e.GET("/explorer", func(c echo.Context) error {
+		repo := c.QueryParam("repo")
+		if repo == "" {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "Repository not specified"})
+		}
 		service, err := githubfs.NewGitHubFSService(repo)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
@@ -80,8 +83,8 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 		})
 	})
 
-	e.GET("/explorer/:repo/list", func(c echo.Context) error {
-		repo := c.Param("repo")
+	e.GET("/explorer/list", func(c echo.Context) error {
+		repo := c.QueryParam("repo")
 		branch := c.QueryParam("branch")
 		path := c.QueryParam("path")
 		service, err := githubfs.NewGitHubFSService(repo)
@@ -100,8 +103,8 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 		})
 	})
 
-	e.GET("/explorer/:repo/file", func(c echo.Context) error {
-		repo := c.Param("repo")
+	e.GET("/explorer/file", func(c echo.Context) error {
+		repo := c.QueryParam("repo")
 		branch := c.QueryParam("branch")
 		path := c.QueryParam("path")
 		service, err := githubfs.NewGitHubFSService(repo)
