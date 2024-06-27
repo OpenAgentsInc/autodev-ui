@@ -125,36 +125,38 @@ func (s *GitHubFSService) countFiles(path string, count *int) error {
 
 func (s *GitHubFSService) ListDirectory(branch, path string) ([]fs.FileInfo, error) {
 	fullPath := filepath.Join(branch, path)
+	fmt.Printf("Attempting to open directory: %s\n", fullPath) // Debug print
+
 	file, err := s.fs.Open(fullPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open directory %s: %w", fullPath, err)
 	}
 	defer file.Close()
 
 	fileInfo, err := file.Stat()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get file info for %s: %w", fullPath, err)
 	}
 
 	if !fileInfo.IsDir() {
-		return nil, fmt.Errorf("path is not a directory")
+		return nil, fmt.Errorf("path is not a directory: %s", fullPath)
 	}
 
 	dir, ok := file.(fs.ReadDirFile)
 	if !ok {
-		return nil, fmt.Errorf("cannot read directory")
+		return nil, fmt.Errorf("file does not implement fs.ReadDirFile: %s", fullPath)
 	}
 
 	entries, err := dir.ReadDir(-1)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read directory %s: %w", fullPath, err)
 	}
 
 	var fileInfos []fs.FileInfo
 	for _, entry := range entries {
 		info, err := entry.Info()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to get info for entry in %s: %w", fullPath, err)
 		}
 		fileInfos = append(fileInfos, info)
 	}

@@ -11,9 +11,9 @@ templ FileExplorerWidget(repo string, branches []string, currentBranch string) {
 			<h2 class="text-lg font-semibold text-white">{ repo }</h2>
 			<select
 				class="bg-gray-600 text-white rounded px-2 py-1"
-				hx-get={ "/widget/explorer/list?repo=" + repo }
+				hx-get={ "/widget/explorer/list?repo=" + repo + "&branch=" + currentBranch }
 				hx-target="#widget-file-tree"
-				hx-trigger="change"
+				hx-trigger="change, load"
 			>
 				for _, branch := range branches {
 					<option value={ branch } selected?={ branch == currentBranch }>{ branch }</option>
@@ -22,7 +22,7 @@ templ FileExplorerWidget(repo string, branches []string, currentBranch string) {
 		</div>
 		<div class="flex-grow flex flex-col overflow-hidden">
 			<div id="widget-file-tree" class="flex-grow overflow-y-auto p-4">
-				@WidgetDirectoryList([]fs.FileInfo{}, "", currentBranch, repo)
+				<!-- Initial directory listing will be loaded here -->
 			</div>
 			<div id="widget-file-preview" class="h-1/3 bg-gray-900 p-4 overflow-y-auto hidden">
 				<div id="widget-file-content"></div>
