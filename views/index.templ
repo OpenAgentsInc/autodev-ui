@@ -8,46 +8,34 @@ templ Index(cssVersion string, data map[string]interface{}) {
 			<title>AutoDev - GitHubFS</title>
 			<link href={ "/static/css/output.css?" + cssVersion } rel="stylesheet"/>
 		</head>
-		<body class="bg-black text-white font-mono h-screen w-screen">
-			<div class="flex flex-col h-full">
-				<header class="p-4 bg-gray-900">
-					<h1 class="text-2xl">AutoDev GitHubFS</h1>
-					if repo, ok := data["Repo"].(string); ok && repo != "" {
-						<p class="mt-2">Current repository: { repo }</p>
-					} else {
-						<p class="mt-2">No repository specified. Use ?repo=owner/name in the URL.</p>
-					}
-				</header>
-				<main class="flex-grow p-4">
-					if errorMsg, ok := data["Error"].(string); ok && errorMsg != "" {
-						<div class="bg-red-600 text-white p-4 rounded mt-4">
-							Error: { errorMsg }
-						</div>
-					}
-					if repo, ok := data["Repo"].(string); !ok || repo == "" {
-						<form action="/" method="get" class="mt-4">
-							<input type="text" name="repo" placeholder="owner/repo" class="p-2 bg-gray-800 text-white rounded"/>
-							<button type="submit" class="ml-2 p-2 bg-blue-600 rounded">Load Repository</button>
-						</form>
-					} else if branches, ok := data["Branches"].([]string); ok {
-						<div class="mt-4">
-							<h2 class="text-xl">Repository Information:</h2>
-							<p>Number of branches: { strconv.Itoa(len(branches)) }</p>
-							<p>Branches: { joinStrings(branches, ", ") }</p>
-							if totalFiles, ok := data["TotalFiles"].(int); ok {
-								<p>Total files across all branches: { strconv.Itoa(totalFiles) }</p>
-							}
-							if branchFileCounts, ok := data["BranchFileCounts"].(map[string]int); ok {
-								<h3 class="text-lg mt-2">File count per branch:</h3>
-								<ul class="list-disc list-inside">
-									for branch, count := range branchFileCounts {
-										<li>{ branch }: { strconv.Itoa(count) } files</li>
+		<body class="bg-black text-white font-mono h-screen w-screen flex items-center justify-center">
+			<div class="border border-white p-6 rounded-lg max-w-2xl w-full">
+				if repo, ok := data["Repo"].(string); ok && repo != "" {
+					<h1 class="text-2xl mb-2">{ repo }</h1>
+					if branches, ok := data["Branches"].([]string); ok {
+						<p class="text-lg mb-4">Number of branches: { strconv.Itoa(len(branches)) }</p>
+						if branchFileCounts, ok := data["BranchFileCounts"].(map[string]int); ok {
+							<table class="w-full">
+								<thead>
+									<tr>
+										<th class="text-left">Branch</th>
+										<th class="text-right">Files</th>
+									</tr>
+								</thead>
+								<tbody>
+									for _, branch := range branches {
+										<tr>
+											<td class="text-left">{ branch }</td>
+											<td class="text-right">{ strconv.Itoa(branchFileCounts[branch]) }</td>
+										</tr>
 									}
-								</ul>
-							}
-						</div>
+								</tbody>
+							</table>
+						}
 					}
-				</main>
+				} else {
+					<p class="text-xl">No repository specified. Use ?repo=owner/name in the URL.</p>
+				}
 			</div>
 		</body>
 	</html>
