@@ -49,6 +49,7 @@ templ WidgetDirectoryList(entries []fs.FileInfo, path string, branch string, rep
 						hx-target="closest li"
 						hx-swap="outerHTML"
 					>
+						<input type="checkbox" class="mr-2" onclick="event.stopPropagation();"/>
 						<span class="mr-2">📁</span>{ entry.Name() }
 					</div>
 				} else {
@@ -58,6 +59,7 @@ templ WidgetDirectoryList(entries []fs.FileInfo, path string, branch string, rep
 						hx-target="#widget-file-content"
 						onClick="document.getElementById('widget-file-preview').classList.remove('hidden')"
 					>
+						<input type="checkbox" class="mr-2" onclick="event.stopPropagation();"/>
 						<span class="mr-2">📄</span>{ entry.Name() }
 					</div>
 				}
