@@ -15,7 +15,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/openagentsinc/autodev/wanix/internal/jsutil"
+	"github.com/openagentsinc/autodev/pkg/wanix/jsutil"
 	"tractor.dev/toolkit-go/engine/fs"
 )
 
