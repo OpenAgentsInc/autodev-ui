@@ -1,14 +1,15 @@
-package services
+package githubfs
 
 import (
 	"fmt"
-	"github.com/openagentsinc/autodev/pkg/wanix/githubfs"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
 type GitHubFSService struct {
-	fs *githubfs.FS
+	fs *FS
 }
 
 func NewGitHubFSService(repo string) (*GitHubFSService, error) {
@@ -23,12 +24,23 @@ func NewGitHubFSService(repo string) (*GitHubFSService, error) {
 		return nil, fmt.Errorf("GITHUB_TOKEN environment variable is not set")
 	}
 
-	fs := githubfs.New(owner, repoName, token)
+	fs := New(owner, repoName, token)
 	return &GitHubFSService{fs: fs}, nil
 }
 
 func (s *GitHubFSService) GetBranches() ([]string, error) {
-	entries, err := s.fs.ReadDir(".")
+	// The root directory contains all branches as directories
+	rootInfo, err := s.fs.Stat(".")
+	if err != nil {
+		return nil, err
+	}
+
+	rootDir, ok := rootInfo.(fs.ReadDirFile)
+	if !ok {
+		return nil, fmt.Errorf("root is not a directory")
+	}
+
+	entries, err := rootDir.ReadDir(-1)
 	if err != nil {
 		return nil, err
 	}
@@ -43,13 +55,13 @@ func (s *GitHubFSService) GetBranches() ([]string, error) {
 }
 
 func (s *GitHubFSService) GetFileCount(branch string) (int, error) {
-	var count int
+	count := 0
 	err := s.countFiles(branch, &count)
 	return count, err
 }
 
 func (s *GitHubFSService) countFiles(path string, count *int) error {
-	entries, err := s.fs.ReadDir(path)
+	entries, err := s.readDir(path)
 	if err != nil {
 		return err
 	}
@@ -58,7 +70,7 @@ func (s *GitHubFSService) countFiles(path string, count *int) error {
 		if !entry.IsDir() {
 			*count++
 		} else {
-			err = s.countFiles(path+"/"+entry.Name(), count)
+			err = s.countFiles(filepath.Join(path, entry.Name()), count)
 			if err != nil {
 				return err
 			}
@@ -66,3 +78,19 @@ func (s *GitHubFSService) countFiles(path string, count *int) error {
 	}
 	return nil
 }
+
+func (s *GitHubFSService) readDir(path string) ([]fs.DirEntry, error) {
+	file, err := s.fs.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	dir, ok := file.(fs.ReadDirFile)
+	if !ok {
+		return nil, fmt.Errorf("%s is not a directory", path)
+	}
+
+	return dir.ReadDir(-1)
+}
+

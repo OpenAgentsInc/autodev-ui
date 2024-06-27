@@ -1,6 +1,8 @@
 package views
 
-templ Index(cssVersion string, repo string) {
+import "strconv"
+
+templ Index(cssVersion string, data map[string]interface{}) {
 	<html>
 		<head>
 			<title>AutoDev - GitHubFS</title>
@@ -8,24 +10,56 @@ templ Index(cssVersion string, repo string) {
 		</head>
 		<body class="bg-black text-white font-mono h-screen w-screen">
 			<div class="flex flex-col h-full">
-				<header class="p-4">
+				<header class="p-4 bg-gray-900">
 					<h1 class="text-2xl">AutoDev GitHubFS</h1>
-					if repo != "" {
+					if repo, ok := data["Repo"].(string); ok && repo != "" {
 						<p class="mt-2">Current repository: { repo }</p>
 					} else {
 						<p class="mt-2">No repository specified. Use ?repo=owner/name in the URL.</p>
 					}
 				</header>
 				<main class="flex-grow p-4">
-					if repo == "" {
+					if errorMsg, ok := data["Error"].(string); ok && errorMsg != "" {
+						<div class="bg-red-600 text-white p-4 rounded mt-4">
+							Error: { errorMsg }
+						</div>
+					}
+					if repo, ok := data["Repo"].(string); !ok || repo == "" {
 						<form action="/" method="get" class="mt-4">
 							<input type="text" name="repo" placeholder="owner/repo" class="p-2 bg-gray-800 text-white rounded"/>
 							<button type="submit" class="ml-2 p-2 bg-blue-600 rounded">Load Repository</button>
 						</form>
+					} else if branches, ok := data["Branches"].([]string); ok {
+						<div class="mt-4">
+							<h2 class="text-xl">Repository Information:</h2>
+							<p>Number of branches: { strconv.Itoa(len(branches)) }</p>
+							<p>Branches: { joinStrings(branches, ", ") }</p>
+							if totalFiles, ok := data["TotalFiles"].(int); ok {
+								<p>Total files across all branches: { strconv.Itoa(totalFiles) }</p>
+							}
+							if branchFileCounts, ok := data["BranchFileCounts"].(map[string]int); ok {
+								<h3 class="text-lg mt-2">File count per branch:</h3>
+								<ul class="list-disc list-inside">
+									for branch, count := range branchFileCounts {
+										<li>{ branch }: { strconv.Itoa(count) } files</li>
+									}
+								</ul>
+							}
+						</div>
 					}
-					<!-- GitHubFS UI will go here -->
 				</main>
 			</div>
 		</body>
 	</html>
+}
+
+func joinStrings(strs []string, sep string) string {
+	if len(strs) == 0 {
+		return ""
+	}
+	result := strs[0]
+	for _, s := range strs[1:] {
+		result += sep + s
+	}
+	return result
 }

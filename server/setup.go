@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/openagentsinc/autodev/config"
+	"github.com/openagentsinc/autodev/pkg/wanix/githubfs"
 	"github.com/openagentsinc/autodev/plugins"
 	"github.com/openagentsinc/autodev/views"
 )
@@ -26,10 +27,39 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 
 	e.GET("/", func(c echo.Context) error {
 		repo := c.QueryParam("repo")
-		return c.Render(http.StatusOK, "index", map[string]interface{}{
+		data := map[string]interface{}{
 			"CssVersion": cssVersion,
 			"Repo":       repo,
-		})
+		}
+
+		if repo != "" {
+			service, err := githubfs.NewGitHubFSService(repo)
+			if err != nil {
+				data["Error"] = fmt.Sprintf("Failed to initialize GitHubFS: %v", err)
+			} else {
+				branches, err := service.GetBranches()
+				if err != nil {
+					data["Error"] = fmt.Sprintf("Failed to get branches: %v", err)
+				} else {
+					data["Branches"] = branches
+					totalFiles := 0
+					branchFileCounts := make(map[string]int)
+					for _, branch := range branches {
+						fileCount, err := service.GetFileCount(branch)
+						if err != nil {
+							data["Error"] = fmt.Sprintf("Failed to get file count for branch %s: %v", branch, err)
+							break
+						}
+						totalFiles += fileCount
+						branchFileCounts[branch] = fileCount
+					}
+					data["TotalFiles"] = totalFiles
+					data["BranchFileCounts"] = branchFileCounts
+				}
+			}
+		}
+
+		return c.Render(http.StatusOK, "index", data)
 	})
 
 	e.GET("/greptile", func(c echo.Context) error {
@@ -66,13 +96,16 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 type TemplRenderer struct{}
 
 func (t *TemplRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-	viewContext, _ := data.(map[string]interface{})
+	viewContext, ok := data.(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("invalid data type for rendering")
+	}
+
 	cssVersion, _ := viewContext["CssVersion"].(string)
-	repo, _ := viewContext["Repo"].(string)
 
 	switch name {
 	case "index":
-		return views.Index(cssVersion, repo).Render(context.Background(), w)
+		return views.Index(cssVersion, viewContext).Render(context.Background(), w)
 	case "greptile":
 		return views.Greptile(cssVersion).Render(context.Background(), w)
 	default:

@@ -15,7 +15,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/openagentsinc/autodev/pkg/wanix/jsutil"
 	"tractor.dev/toolkit-go/engine/fs"
 )
 
@@ -100,7 +99,7 @@ func (g *FS) apiRequest(method, url, acceptHeader string, body io.Reader) (*http
 		return nil, err
 	}
 
-	jsutil.Log(method, url, resp.Status)
+	//	jsutil.Log(method, url, resp.Status)
 	if resp.StatusCode == 401 {
 		return resp, fs.ErrPermission
 	}
