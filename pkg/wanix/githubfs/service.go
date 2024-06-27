@@ -1,15 +1,20 @@
 package githubfs
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/fs"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
 type GitHubFSService struct {
-	fs *FS
+	fs    *FS
+	owner string
+	repo  string
+	token string
 }
 
 func NewGitHubFSService(repo string) (*GitHubFSService, error) {
@@ -25,33 +30,48 @@ func NewGitHubFSService(repo string) (*GitHubFSService, error) {
 	}
 
 	fs := New(owner, repoName, token)
-	return &GitHubFSService{fs: fs}, nil
+	return &GitHubFSService{
+		fs:    fs,
+		owner: owner,
+		repo:  repoName,
+		token: token,
+	}, nil
 }
 
 func (s *GitHubFSService) GetBranches() ([]string, error) {
-	// The root directory contains all branches as directories
-	rootInfo, err := s.fs.Stat(".")
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/branches", s.owner, s.repo)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	rootDir, ok := rootInfo.(fs.ReadDirFile)
-	if !ok {
-		return nil, fmt.Errorf("root is not a directory")
-	}
+	req.Header.Set("Authorization", "token "+s.token)
+	req.Header.Set("Accept", "application/vnd.github.v3+json")
 
-	entries, err := rootDir.ReadDir(-1)
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
-	var branches []string
-	for _, entry := range entries {
-		if entry.IsDir() {
-			branches = append(branches, entry.Name())
-		}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("GitHub API request failed with status: %s", resp.Status)
 	}
-	return branches, nil
+
+	var branches []struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&branches); err != nil {
+		return nil, err
+	}
+
+	var branchNames []string
+	for _, branch := range branches {
+		branchNames = append(branchNames, branch.Name)
+	}
+
+	return branchNames, nil
 }
 
 func (s *GitHubFSService) GetFileCount(branch string) (int, error) {
@@ -61,36 +81,44 @@ func (s *GitHubFSService) GetFileCount(branch string) (int, error) {
 }
 
 func (s *GitHubFSService) countFiles(path string, count *int) error {
-	entries, err := s.readDir(path)
+	file, err := s.fs.Open(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return err
+	}
+
+	if !fileInfo.IsDir() {
+		*count++
+		return nil
+	}
+
+	// If it's a directory, we need to list its contents
+	dir, ok := file.(fs.ReadDirFile)
+	if !ok {
+		return fmt.Errorf("file is not a directory")
+	}
+
+	entries, err := dir.ReadDir(-1)
 	if err != nil {
 		return err
 	}
 
 	for _, entry := range entries {
-		if !entry.IsDir() {
-			*count++
-		} else {
-			err = s.countFiles(filepath.Join(path, entry.Name()), count)
-			if err != nil {
+		fullPath := filepath.Join(path, entry.Name())
+		if entry.IsDir() {
+			if err := s.countFiles(fullPath, count); err != nil {
 				return err
 			}
+		} else {
+			*count++
 		}
 	}
+
 	return nil
-}
-
-func (s *GitHubFSService) readDir(path string) ([]fs.DirEntry, error) {
-	file, err := s.fs.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	dir, ok := file.(fs.ReadDirFile)
-	if !ok {
-		return nil, fmt.Errorf("%s is not a directory", path)
-	}
-
-	return dir.ReadDir(-1)
 }
 
