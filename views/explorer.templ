@@ -13,7 +13,7 @@ templ Explorer(cssVersion string, repo string, branches []string) {
 			<script src="https://unpkg.com/htmx.org@1.9.2"></script>
 		</head>
 		<body class="bg-black text-white font-mono h-screen flex">
-			<div class="w-1/4 border-r border-gray-700 p-4">
+			<div class="w-1/4 border-r border-gray-700 p-4 overflow-auto">
 				<h2 class="text-xl mb-4">Branches</h2>
 				<ul>
 					for _, branch := range branches {
@@ -27,9 +27,10 @@ templ Explorer(cssVersion string, repo string, branches []string) {
 					}
 				</ul>
 			</div>
-			<div class="w-3/4 p-4">
+			<div class="w-3/4 p-4 flex flex-col">
 				<h1 class="text-2xl mb-4">{ repo }</h1>
-				<div id="file-tree" class="mt-4"></div>
+				<div id="file-tree" class="mt-4 overflow-auto flex-grow"></div>
+				<div id="file-content" class="mt-4 bg-gray-900 p-4 rounded hidden"></div>
 			</div>
 		</body>
 	</html>
@@ -44,15 +45,18 @@ templ DirectoryList(entries []fs.FileInfo, path string, branch string, repo stri
 						class="flex items-center"
 						hx-get={ "/explorer/list?repo=" + repo + "&branch=" + branch + "&path=" + filepath.Join(path, entry.Name()) }
 						hx-target="next .nested-list"
+						hx-swap="innerHTML"
 					>
 						<span class="mr-2">📁</span>{ entry.Name() }
 					</button>
-					<div class="nested-list hidden"></div>
+					<div class="nested-list"></div>
 				} else {
 					<button
 						class="flex items-center"
 						hx-get={ "/explorer/file?repo=" + repo + "&branch=" + branch + "&path=" + filepath.Join(path, entry.Name()) }
 						hx-target="#file-content"
+						hx-swap="innerHTML"
+						onClick="document.getElementById('file-content').classList.remove('hidden')"
 					>
 						<span class="mr-2">📄</span>{ entry.Name() }
 					</button>
@@ -63,7 +67,7 @@ templ DirectoryList(entries []fs.FileInfo, path string, branch string, repo stri
 }
 
 templ FileContent(content string, path string) {
-	<div class="bg-gray-900 p-4 rounded">
+	<div>
 		<h3 class="text-lg mb-2">{ path }</h3>
 		<pre class="whitespace-pre-wrap">{ content }</pre>
 	</div>

@@ -87,14 +87,23 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 		repo := c.QueryParam("repo")
 		branch := c.QueryParam("branch")
 		path := c.QueryParam("path")
+
+		c.Logger().Infof("Listing directory: repo=%s, branch=%s, path=%s", repo, branch, path)
+
 		service, err := githubfs.NewGitHubFSService(repo)
 		if err != nil {
+			c.Logger().Errorf("Failed to create GitHubFSService: %v", err)
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		}
+
 		entries, err := service.ListDirectory(branch, path)
 		if err != nil {
+			c.Logger().Errorf("Failed to list directory: %v", err)
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		}
+
+		c.Logger().Infof("Found %d entries", len(entries))
+
 		return c.Render(http.StatusOK, "directory_list", map[string]interface{}{
 			"Entries": entries,
 			"Path":    path,
@@ -107,14 +116,23 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 		repo := c.QueryParam("repo")
 		branch := c.QueryParam("branch")
 		path := c.QueryParam("path")
+
+		c.Logger().Infof("Fetching file content: repo=%s, branch=%s, path=%s", repo, branch, path)
+
 		service, err := githubfs.NewGitHubFSService(repo)
 		if err != nil {
+			c.Logger().Errorf("Failed to create GitHubFSService: %v", err)
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		}
+
 		content, err := service.GetFileContent(branch, path)
 		if err != nil {
+			c.Logger().Errorf("Failed to get file content: %v", err)
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		}
+
+		c.Logger().Infof("Successfully fetched file content (length: %d)", len(content))
+
 		return c.Render(http.StatusOK, "file_content", map[string]interface{}{
 			"Content": content,
 			"Path":    path,
