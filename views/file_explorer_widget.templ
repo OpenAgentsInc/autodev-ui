@@ -1,0 +1,74 @@
+package views
+
+import (
+	"io/fs"
+	"path/filepath"
+)
+
+templ FileExplorerWidget(repo string, branches []string, currentBranch string) {
+	<div class="bg-gray-800 rounded-lg shadow-lg w-96 h-[600px] flex flex-col">
+		<div class="p-4 bg-gray-700 rounded-t-lg flex justify-between items-center">
+			<h2 class="text-lg font-semibold text-white">{ repo }</h2>
+			<select
+				class="bg-gray-600 text-white rounded px-2 py-1"
+				hx-get={ "/widget/explorer/list?repo=" + repo }
+				hx-target="#widget-file-tree"
+				hx-trigger="change"
+			>
+				for _, branch := range branches {
+					<option value={ branch } selected?={ branch == currentBranch }>{ branch }</option>
+				}
+			</select>
+		</div>
+		<div class="flex-grow flex flex-col overflow-hidden">
+			<div id="widget-file-tree" class="flex-grow overflow-y-auto p-4">
+				@WidgetDirectoryList([]fs.FileInfo{}, "", currentBranch, repo)
+			</div>
+			<div id="widget-file-preview" class="h-1/3 bg-gray-900 p-4 overflow-y-auto hidden">
+				<div id="widget-file-content"></div>
+			</div>
+		</div>
+		<button
+			id="widget-toggle-preview"
+			class="bg-gray-700 text-white p-2 w-full"
+			onClick="document.getElementById('widget-file-preview').classList.toggle('hidden')"
+		>
+			Toggle Preview
+		</button>
+	</div>
+}
+
+templ WidgetDirectoryList(entries []fs.FileInfo, path string, branch string, repo string) {
+	<ul class="space-y-1">
+		for _, entry := range entries {
+			<li>
+				if entry.IsDir() {
+					<div
+						class="flex items-center cursor-pointer hover:bg-gray-700 p-1 rounded"
+						hx-get={ "/widget/explorer/list?repo=" + repo + "&branch=" + branch + "&path=" + filepath.Join(path, entry.Name()) }
+						hx-target="closest li"
+						hx-swap="outerHTML"
+					>
+						<span class="mr-2">📁</span>{ entry.Name() }
+					</div>
+				} else {
+					<div
+						class="flex items-center cursor-pointer hover:bg-gray-700 p-1 rounded"
+						hx-get={ "/widget/explorer/file?repo=" + repo + "&branch=" + branch + "&path=" + filepath.Join(path, entry.Name()) }
+						hx-target="#widget-file-content"
+						onClick="document.getElementById('widget-file-preview').classList.remove('hidden')"
+					>
+						<span class="mr-2">📄</span>{ entry.Name() }
+					</div>
+				}
+			</li>
+		}
+	</ul>
+}
+
+templ WidgetFileContent(content string, path string) {
+	<div>
+		<h3 class="text-sm font-semibold mb-2">{ path }</h3>
+		<pre class="text-xs whitespace-pre-wrap">{ content }</pre>
+	</div>
+}

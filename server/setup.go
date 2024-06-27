@@ -139,6 +139,83 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 		})
 	})
 
+	e.GET("/widget/explorer", func(c echo.Context) error {
+		repo := c.QueryParam("repo")
+		if repo == "" {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "Repository not specified"})
+		}
+		service, err := githubfs.NewGitHubFSService(repo)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+		branches, err := service.GetBranches()
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+		currentBranch := branches[0] // Default to first branch
+		return c.Render(http.StatusOK, "file_explorer_widget", map[string]interface{}{
+			"Repo":          repo,
+			"Branches":      branches,
+			"CurrentBranch": currentBranch,
+		})
+	})
+
+	e.GET("/widget/explorer/list", func(c echo.Context) error {
+		repo := c.QueryParam("repo")
+		branch := c.QueryParam("branch")
+		path := c.QueryParam("path")
+
+		c.Logger().Infof("Listing directory: repo=%s, branch=%s, path=%s", repo, branch, path)
+
+		service, err := githubfs.NewGitHubFSService(repo)
+		if err != nil {
+			c.Logger().Errorf("Failed to create GitHubFSService: %v", err)
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+
+		entries, err := service.ListDirectory(branch, path)
+		if err != nil {
+			c.Logger().Errorf("Failed to list directory: %v", err)
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+
+		c.Logger().Infof("Found %d entries", len(entries))
+
+		return c.Render(http.StatusOK, "widget_directory_list", map[string]interface{}{
+			"Entries": entries,
+			"Path":    path,
+			"Branch":  branch,
+			"Repo":    repo,
+		})
+	})
+
+	e.GET("/widget/explorer/file", func(c echo.Context) error {
+		repo := c.QueryParam("repo")
+		branch := c.QueryParam("branch")
+		path := c.QueryParam("path")
+
+		c.Logger().Infof("Fetching file content: repo=%s, branch=%s, path=%s", repo, branch, path)
+
+		service, err := githubfs.NewGitHubFSService(repo)
+		if err != nil {
+			c.Logger().Errorf("Failed to create GitHubFSService: %v", err)
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+
+		content, err := service.GetFileContent(branch, path)
+		if err != nil {
+			c.Logger().Errorf("Failed to get file content: %v", err)
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+
+		c.Logger().Infof("Successfully fetched file content (length: %d)", len(content))
+
+		return c.Render(http.StatusOK, "widget_file_content", map[string]interface{}{
+			"Content": content,
+			"Path":    path,
+		})
+	})
+
 	e.GET("/greptile", func(c echo.Context) error {
 		return c.Render(http.StatusOK, "greptile", map[string]interface{}{
 			"CssVersion": cssVersion,
@@ -185,6 +262,21 @@ func (t *TemplRenderer) Render(w io.Writer, name string, data interface{}, c ech
 		return views.Index(cssVersion, viewContext).Render(context.Background(), w)
 	case "greptile":
 		return views.Greptile(cssVersion).Render(context.Background(), w)
+	case "file_explorer_widget":
+		repo, _ := viewContext["Repo"].(string)
+		branches, _ := viewContext["Branches"].([]string)
+		currentBranch, _ := viewContext["CurrentBranch"].(string)
+		return views.FileExplorerWidget(repo, branches, currentBranch).Render(context.Background(), w)
+	case "widget_directory_list":
+		entries, _ := viewContext["Entries"].([]fs.FileInfo)
+		path, _ := viewContext["Path"].(string)
+		branch, _ := viewContext["Branch"].(string)
+		repo, _ := viewContext["Repo"].(string)
+		return views.WidgetDirectoryList(entries, path, branch, repo).Render(context.Background(), w)
+	case "widget_file_content":
+		content, _ := viewContext["Content"].(string)
+		path, _ := viewContext["Path"].(string)
+		return views.WidgetFileContent(content, path).Render(context.Background(), w)
 	case "explorer":
 		repo, _ := viewContext["Repo"].(string)
 		branches, _ := viewContext["Branches"].([]string)
