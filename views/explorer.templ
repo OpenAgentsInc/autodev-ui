@@ -1,0 +1,70 @@
+package views
+
+import (
+	"io/fs"
+	"path/filepath"
+)
+
+templ Explorer(cssVersion string, repo string, branches []string) {
+	<html>
+		<head>
+			<title>AutoDev - File Explorer</title>
+			<link href={ "/static/css/output.css?" + cssVersion } rel="stylesheet"/>
+			<script src="https://unpkg.com/htmx.org@1.9.2"></script>
+		</head>
+		<body class="bg-black text-white font-mono h-screen flex">
+			<div class="w-1/4 border-r border-gray-700 p-4">
+				<h2 class="text-xl mb-4">Branches</h2>
+				<ul>
+					for _, branch := range branches {
+						<li>
+							<button
+								class="w-full text-left p-2 hover:bg-gray-800"
+								hx-get={ "/explorer/" + repo + "/list?branch=" + branch }
+								hx-target="#file-tree"
+							>{ branch }</button>
+						</li>
+					}
+				</ul>
+			</div>
+			<div class="w-3/4 p-4">
+				<h1 class="text-2xl mb-4">{ repo }</h1>
+				<div id="file-tree" class="mt-4"></div>
+			</div>
+		</body>
+	</html>
+}
+
+templ DirectoryList(entries []fs.FileInfo, path string, branch string, repo string) {
+	<ul class="pl-4">
+		for _, entry := range entries {
+			<li class="mb-2">
+				if entry.IsDir() {
+					<button
+						class="flex items-center"
+						hx-get={ "/explorer/" + repo + "/list?branch=" + branch + "&path=" + filepath.Join(path, entry.Name()) }
+						hx-target="next .nested-list"
+					>
+						<span class="mr-2">📁</span>{ entry.Name() }
+					</button>
+					<div class="nested-list hidden"></div>
+				} else {
+					<button
+						class="flex items-center"
+						hx-get={ "/explorer/" + repo + "/file?branch=" + branch + "&path=" + filepath.Join(path, entry.Name()) }
+						hx-target="#file-content"
+					>
+						<span class="mr-2">📄</span>{ entry.Name() }
+					</button>
+				}
+			</li>
+		}
+	</ul>
+}
+
+templ FileContent(content string, path string) {
+	<div class="bg-gray-900 p-4 rounded">
+		<h3 class="text-lg mb-2">{ path }</h3>
+		<pre class="whitespace-pre-wrap">{ content }</pre>
+	</div>
+}

@@ -3,6 +3,7 @@ package githubfs
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/fs"
 	"net/http"
 	"os"
@@ -122,3 +123,66 @@ func (s *GitHubFSService) countFiles(path string, count *int) error {
 	return nil
 }
 
+func (s *GitHubFSService) ListDirectory(branch, path string) ([]fs.FileInfo, error) {
+	fullPath := filepath.Join(branch, path)
+	file, err := s.fs.Open(fullPath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	if !fileInfo.IsDir() {
+		return nil, fmt.Errorf("path is not a directory")
+	}
+
+	dir, ok := file.(fs.ReadDirFile)
+	if !ok {
+		return nil, fmt.Errorf("cannot read directory")
+	}
+
+	entries, err := dir.ReadDir(-1)
+	if err != nil {
+		return nil, err
+	}
+
+	var fileInfos []fs.FileInfo
+	for _, entry := range entries {
+		info, err := entry.Info()
+		if err != nil {
+			return nil, err
+		}
+		fileInfos = append(fileInfos, info)
+	}
+
+	return fileInfos, nil
+}
+
+func (s *GitHubFSService) GetFileContent(branch, path string) (string, error) {
+	fullPath := filepath.Join(branch, path)
+	file, err := s.fs.Open(fullPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to open file: %w", err)
+	}
+	defer file.Close()
+
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return "", fmt.Errorf("failed to get file info: %w", err)
+	}
+
+	if fileInfo.IsDir() {
+		return "", fmt.Errorf("path is a directory, not a file")
+	}
+
+	content, err := io.ReadAll(file)
+	if err != nil {
+		return "", fmt.Errorf("failed to read file content: %w", err)
+	}
+
+	return string(content), nil
+}

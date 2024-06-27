@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"time"
 
@@ -62,6 +63,61 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 		return c.Render(http.StatusOK, "index", data)
 	})
 
+	e.GET("/explorer/:repo", func(c echo.Context) error {
+		repo := c.Param("repo")
+		service, err := githubfs.NewGitHubFSService(repo)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+		branches, err := service.GetBranches()
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+		return c.Render(http.StatusOK, "explorer", map[string]interface{}{
+			"CssVersion": cssVersion,
+			"Repo":       repo,
+			"Branches":   branches,
+		})
+	})
+
+	e.GET("/explorer/:repo/list", func(c echo.Context) error {
+		repo := c.Param("repo")
+		branch := c.QueryParam("branch")
+		path := c.QueryParam("path")
+		service, err := githubfs.NewGitHubFSService(repo)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+		entries, err := service.ListDirectory(branch, path)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+		return c.Render(http.StatusOK, "directory_list", map[string]interface{}{
+			"Entries": entries,
+			"Path":    path,
+			"Branch":  branch,
+			"Repo":    repo,
+		})
+	})
+
+	e.GET("/explorer/:repo/file", func(c echo.Context) error {
+		repo := c.Param("repo")
+		branch := c.QueryParam("branch")
+		path := c.QueryParam("path")
+		service, err := githubfs.NewGitHubFSService(repo)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+		content, err := service.GetFileContent(branch, path)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+		return c.Render(http.StatusOK, "file_content", map[string]interface{}{
+			"Content": content,
+			"Path":    path,
+		})
+	})
+
 	e.GET("/greptile", func(c echo.Context) error {
 		return c.Render(http.StatusOK, "greptile", map[string]interface{}{
 			"CssVersion": cssVersion,
@@ -108,6 +164,20 @@ func (t *TemplRenderer) Render(w io.Writer, name string, data interface{}, c ech
 		return views.Index(cssVersion, viewContext).Render(context.Background(), w)
 	case "greptile":
 		return views.Greptile(cssVersion).Render(context.Background(), w)
+	case "explorer":
+		repo, _ := viewContext["Repo"].(string)
+		branches, _ := viewContext["Branches"].([]string)
+		return views.Explorer(cssVersion, repo, branches).Render(context.Background(), w)
+	case "directory_list":
+		entries, _ := viewContext["Entries"].([]fs.FileInfo)
+		path, _ := viewContext["Path"].(string)
+		branch, _ := viewContext["Branch"].(string)
+		repo, _ := viewContext["Repo"].(string)
+		return views.DirectoryList(entries, path, branch, repo).Render(context.Background(), w)
+	case "file_content":
+		content, _ := viewContext["Content"].(string)
+		path, _ := viewContext["Path"].(string)
+		return views.FileContent(content, path).Render(context.Background(), w)
 	default:
 		return fmt.Errorf("unknown template: %s", name)
 	}

@@ -21,4 +21,3 @@ func main() {
 	e := server.SetupServer(cfg, plugin)
 	e.Logger.Fatal(e.Start(":8080"))
 }
-
