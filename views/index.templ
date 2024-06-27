@@ -11,7 +11,7 @@ templ Index(cssVersion string, data map[string]interface{}) {
 		</head>
 		<body class="bg-black text-white font-mono h-screen w-screen flex">
 			<div class="flex w-full">
-				<div class="w-1/3 border-r border-white p-6">
+				<div class="w-1/3 border-r border-[rgba(255,255,255,0.2)] p-6">
 					if repo, ok := data["Repo"].(string); ok && repo != "" {
 						<h2 class="text-xl mb-4">File Explorer</h2>
 						<div hx-get={ "/widget/explorer?repo=" + repo } hx-trigger="load"></div>

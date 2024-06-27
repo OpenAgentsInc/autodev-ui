@@ -152,7 +152,32 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		}
-		currentBranch := branches[0] // Default to first branch
+
+		currentBranch := ""
+
+		// Try to find "main" branch
+		for _, branch := range branches {
+			if branch == "main" {
+				currentBranch = "main"
+				break
+			}
+		}
+
+		// If "main" not found, try to find "master" branch
+		if currentBranch == "" {
+			for _, branch := range branches {
+				if branch == "master" {
+					currentBranch = "master"
+					break
+				}
+			}
+		}
+
+		// If neither "main" nor "master" found, use the first branch
+		if currentBranch == "" && len(branches) > 0 {
+			currentBranch = branches[0]
+		}
+
 		return c.Render(http.StatusOK, "file_explorer_widget", map[string]interface{}{
 			"Repo":          repo,
 			"Branches":      branches,
