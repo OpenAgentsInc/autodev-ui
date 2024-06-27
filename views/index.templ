@@ -9,36 +9,45 @@ templ Index(cssVersion string, data map[string]interface{}) {
 			<link href={ "/static/css/output.css?" + cssVersion } rel="stylesheet"/>
 			<script src="https://unpkg.com/htmx.org@1.9.2"></script>
 		</head>
-		<body class="bg-black text-white font-mono h-screen w-screen flex items-center justify-center">
-			<div class="border border-white p-6 rounded-lg max-w-2xl w-full">
-				if repo, ok := data["Repo"].(string); ok && repo != "" {
-					<h1 class="text-2xl mb-2">{ repo }</h1>
-					<a href={ templ.SafeURL("/explorer?repo=" + repo) } class="text-blue-400 hover:underline mb-4 inline-block">Open File Explorer</a>
-					<div hx-get={ "/widget/explorer?repo=" + repo } hx-trigger="load"></div>
-					if branches, ok := data["Branches"].([]string); ok {
-						<p class="text-lg mb-4">Number of branches: { strconv.Itoa(len(branches)) }</p>
-						if branchFileCounts, ok := data["BranchFileCounts"].(map[string]int); ok {
-							<table class="w-full">
-								<thead>
-									<tr>
-										<th class="text-left">Branch</th>
-										<th class="text-right">Files</th>
-									</tr>
-								</thead>
-								<tbody>
-									for _, branch := range branches {
-										<tr>
-											<td class="text-left">{ branch }</td>
-											<td class="text-right">{ strconv.Itoa(branchFileCounts[branch]) }</td>
-										</tr>
-									}
-								</tbody>
-							</table>
-						}
+		<body class="bg-black text-white font-mono h-screen w-screen flex">
+			<div class="flex w-full">
+				<div class="w-1/3 border-r border-white p-6">
+					if repo, ok := data["Repo"].(string); ok && repo != "" {
+						<h2 class="text-xl mb-4">File Explorer</h2>
+						<div hx-get={ "/widget/explorer?repo=" + repo } hx-trigger="load"></div>
 					}
-				} else {
-					<p class="text-xl">No repository specified. Use ?repo=owner/name in the URL.</p>
-				}
+				</div>
+				<div class="w-2/3 p-6">
+					<div class="max-w-2xl mx-auto">
+						if repo, ok := data["Repo"].(string); ok && repo != "" {
+							<h1 class="text-2xl mb-2">{ repo }</h1>
+							<a href={ templ.SafeURL("/explorer?repo=" + repo) } class="text-blue-400 hover:underline mb-4 inline-block">Open File Explorer</a>
+							if branches, ok := data["Branches"].([]string); ok {
+								<p class="text-lg mb-4">Number of branches: { strconv.Itoa(len(branches)) }</p>
+								if branchFileCounts, ok := data["BranchFileCounts"].(map[string]int); ok {
+									<table class="w-full">
+										<thead>
+											<tr>
+												<th class="text-left">Branch</th>
+												<th class="text-right">Files</th>
+											</tr>
+										</thead>
+										<tbody>
+											for _, branch := range branches {
+												<tr>
+													<td class="text-left">{ branch }</td>
+													<td class="text-right">{ strconv.Itoa(branchFileCounts[branch]) }</td>
+												</tr>
+											}
+										</tbody>
+									</table>
+								}
+							}
+						} else {
+							<p class="text-xl">No repository specified. Use ?repo=owner/name in the URL.</p>
+						}
+					</div>
+				</div>
 			</div>
 		</body>
 	</html>
