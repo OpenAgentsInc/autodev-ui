@@ -15,6 +15,7 @@ import (
 	"github.com/openagentsinc/autodev/pkg/action"
 	"github.com/openagentsinc/autodev/pkg/agent"
 	"github.com/openagentsinc/autodev/pkg/plugin"
+	"github.com/openagentsinc/autodev/pkg/state"
 	"github.com/openagentsinc/autodev/pkg/wanix/githubfs"
 	"github.com/openagentsinc/autodev/plugins"
 	"github.com/openagentsinc/autodev/views"
@@ -26,12 +27,16 @@ type ConversationEntry struct {
 }
 
 type AgentController struct {
-	Agent   agent.Agent
+	agent   func() agent.Agent
 	Actions action.ActionManager
 }
 
 func (ac *AgentController) ActionManager() action.ActionManager {
 	return ac.Actions
+}
+
+func (ac *AgentController) Agent() agent.Agent {
+	return ac.agent()
 }
 
 func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
@@ -47,8 +52,10 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 		// {Name: "example-plugin", Version: "1.0.0"},
 	}
 	agentCtrl := &AgentController{
-		Agent:   agent.NewBaseAgent(cfg.LLM, pluginReqs), // Assuming you have a NewCodeActAgent function
-		Actions: action.NewActionManager(),               // Assuming you have a NewActionManager function
+		agent: func() agent.Agent {
+			return agent.NewBaseAgent(cfg.LLM, pluginReqs)
+		},
+		Actions: action.NewActionManager(), // Make sure this function exists in the action package
 	}
 
 	e.GET("/agent/test", func(c echo.Context) error {
@@ -60,20 +67,25 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 		conversation = append(conversation, ConversationEntry{Role: "user", Content: message})
 
 		// Create a new state for each interaction
-		state := agent.NewState(message)
+		state := state.NewState(nil)
+
+		// Create a new state for each interaction
+		// state := state.NewState(message)
 
 		// Get the next action from the agent
 		nextAction := agentCtrl.Agent.Step(state)
 
+		// 0] server/setup.go:73:30: cannot use agentCtrl (variable of type *AgentController) as action.AgentController value in argument to nextAction.Run: *AgentController does not implement action.AgentController (*AgentController.Agent is a field, not a method)
 		// Execute the action
 		obs, err := nextAction.Run(agentCtrl)
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
-		}
+		// if err != nil {
+		// return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		// }
 
 		// Add the agent's response to the conversation
-		agentResponse := obs.GetContent()
-		conversation = append(conversation, ConversationEntry{Role: "agent", Content: agentResponse})
+		// agentResponse := obs.GetContent()
+		// conversation = append(conversation, ConversationEntry{Role: "agent", Content: agentResponse})
+		agentResponse := "Hello, I am an agent. How can I help you?"
 
 		return c.Render(http.StatusOK, "conversation_update", ConversationEntry{Role: "agent", Content: agentResponse})
 	})
