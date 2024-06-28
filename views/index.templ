@@ -8,7 +8,6 @@ templ Index(cssVersion string, myAgent *agent.Agent) {
 			<title>AutoDev Workspace</title>
 			<link href={ "/static/css/output.css?" + cssVersion } rel="stylesheet"/>
 			<script src="https://unpkg.com/htmx.org@2.0.0" integrity="sha384-wS5l5IKJBvK6sPTKa2WZ1js3d947pvWXbPJ1OmWfEuxLgeHcEbjUUA5i9V5ZkpCw" crossorigin="anonymous"></script>
-			<script src="https://unpkg.com/htmx-ext-sse@2.0.0/sse.js"></script>
 		</head>
 		<body class="bg-black text-white font-mono h-screen flex">
 			<!-- Left Sidebar -->
@@ -28,17 +27,23 @@ templ Index(cssVersion string, myAgent *agent.Agent) {
 				<!-- Message List -->
 				<div class="w-1/2 flex flex-col bg-black">
 					<div id="message-list" class="flex-grow p-4 overflow-y-auto flex flex-col space-y-4">
-						<div class="bg-zinc-900 rounded p-3 mb-4 inline-block">
+						<div class="bg-zinc-900 rounded p-3 inline-block">
 							AutoDev awaiting instructions.
 						</div>
 						<!-- New messages will be added here -->
 					</div>
-					<form id="message-form" class="p-4" hx-post="/submit-message" hx-target="#message-list" hx-swap="beforeend" hx-on::after-request="this.reset()">
+					<form
+						id="message-form"
+						class="p-4"
+						hx-post="/submit-message"
+						hx-target="#message-list"
+						hx-swap="beforeend"
+						hx-on::after-request="this.reset()"
+					>
 						<input
 							type="text"
 							name="message"
 							placeholder="Type your message..."
-							autocomplete="off"
 							class="w-full bg-zinc-900 text-white rounded p-2 focus:outline-none focus:ring-0 focus:border-transparent"
 						/>
 					</form>
@@ -60,35 +65,21 @@ templ Index(cssVersion string, myAgent *agent.Agent) {
 						<button class="px-3 py-1 rounded hover:bg-zinc-900">Editor</button>
 						<button class="px-3 py-1 bg-zinc-800 rounded font-bold">Planner</button>
 					</div>
-					<div class="flex-grow bg-zinc-900 rounded p-4 mb-4 overflow-y-auto">
+					<div id="plan-display" class="flex-grow bg-zinc-900 rounded p-4 mb-4 overflow-y-auto">
 						<h3 class="text-lg font-bold mb-2">Main Goal:</h3>
 						<p class="mb-4">{ myAgent.GetPlan().MainGoal }</p>
 						<h3 class="text-lg font-bold mb-2">Tasks:</h3>
-						<div class="h-full overflow-y-auto">
-							<ul
-								id="task-list"
-								hx-ext="sse"
-								sse-connect="/plan-updates"
-								sse-swap="message"
-								class="list-none pl-0 space-y-2"
-							></ul>
-						</div>
-					</div>
-					<div class="flex justify-between">
-						<button
-							hx-post="/replay"
-							hx-trigger="click"
-							hx-target="#task-list"
-							hx-swap="innerHTML"
-							class="px-3 py-1 rounded hover:bg-zinc-900"
-						>⏮ Replay</button>
-						<button class="px-3 py-1 rounded hover:bg-zinc-900">⏭</button>
+						<ul class="list-none pl-0 space-y-2">
+							for _, task := range myAgent.GetPlan().Tasks {
+								<li class="flex justify-between items-center">
+									<span>{ task.Goal }</span>
+									<span class="text-sm">{ task.State }</span>
+								</li>
+							}
+						</ul>
 					</div>
 				</div>
 			</div>
-			<script>
-				// ... (previous JavaScript code remains unchanged)
-			</script>
 		</body>
 	</html>
 }

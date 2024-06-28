@@ -1,5 +1,9 @@
 package agent
 
+import (
+	"github.com/openagentsinc/autodev/llm"
+)
+
 // Task represents a single task or subtask in the plan
 type Task struct {
 	ID       string
@@ -24,7 +28,8 @@ func NewPlan(mainGoal string, initialTasks []*Task) *Plan {
 
 // Agent represents our AI agent with planning capabilities
 type Agent struct {
-	CurrentPlan *Plan
+	CurrentPlan         *Plan
+	ConversationHistory []llm.Message
 }
 
 // NewAgent creates a new Agent with an initial plan
@@ -41,4 +46,20 @@ func (a *Agent) GetPlan() *Plan {
 
 func (a *Agent) ResetPlan() {
 	a.CurrentPlan = NewPlan(a.CurrentPlan.MainGoal, []*Task{})
+}
+
+func (a *Agent) GetConversationHistory() []llm.Message {
+	return a.ConversationHistory
+}
+
+func (a *Agent) SetConversationHistory(history []llm.Message) {
+	a.ConversationHistory = history
+}
+
+func (a *Agent) AddToConversationHistory(message llm.Message) {
+	a.ConversationHistory = append(a.ConversationHistory, message)
+}
+
+func (a *Agent) ClearConversationHistory() {
+	a.ConversationHistory = []llm.Message{}
 }

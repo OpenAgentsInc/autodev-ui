@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"net/http"
 	"time"
+    "strings"
 
 	"github.com/extism/go-sdk"
 	"github.com/labstack/echo/v4"
@@ -16,6 +17,7 @@ import (
 	"github.com/openagentsinc/autodev/pkg/wanix/githubfs"
 	"github.com/openagentsinc/autodev/plugins"
 	"github.com/openagentsinc/autodev/views"
+    "github.com/openagentsinc/autodev/llm"
 )
 
 func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
@@ -26,6 +28,8 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 	e.Static("/static", "static")
 
 	cssVersion := fmt.Sprintf("v=%d", time.Now().Unix())
+
+    llmClient := llm.NewLLM("", "")
 
 	// Create a new agent with a hardcoded plan
 	initialPlan := agent.NewPlan(
@@ -41,37 +45,60 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 		})
 	})
 
-	e.POST("/submit-message", func(c echo.Context) error {
+    e.POST("/submit-message", func(c echo.Context) error {
+        message := c.FormValue("message")
+
+		return c.HTML(http.StatusOK, "<h1>NICE</h1>")
+    })
+
+    e.POST("/submit-message2", func(c echo.Context) error {
 		message := c.FormValue("message")
 
-		// TODO: Process the message using an LLM
-		// For now, we'll just echo the message back
-		response := fmt.Sprintf("Received: %s", message)
+		// Get conversation history from the agent
+		conversationHistory := myAgent.GetConversationHistory()
 
-		// TODO: Update the agent's plan based on the LLM's analysis
-		// For now, we'll just add a dummy task
-		newTask := agent.Task{
-			ID:    fmt.Sprintf("%d", len(myAgent.GetPlan().Tasks)+1),
-			Goal:  fmt.Sprintf("New task based on: %s", message),
+		// Add the new user message
+		conversationHistory = append(conversationHistory, llm.Message{
+			Role:    "user",
+			Content: message,
+		})
+
+		// Generate response using LLM
+		response, err := cfg.LLM.GenerateResponse(conversationHistory, 1024)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+
+		// Add the assistant's response to the conversation history
+		conversationHistory = append(conversationHistory, llm.Message{
+			Role:    "assistant",
+			Content: response,
+		})
+
+		// Update the agent's conversation history
+		myAgent.SetConversationHistory(conversationHistory)
+
+		// Update the plan based on the LLM response
+		// This is a placeholder - you might want to implement more sophisticated plan updating logic
+		newTask := &agent.Task{
+			ID:    fmt.Sprintf("%d", len(myAgent.GetPlan().Tasks) + 1),
+			Goal:  response,
 			State: "open",
 		}
-		myAgent.GetPlan().Tasks = append(myAgent.GetPlan().Tasks, &newTask)
+		myAgent.GetPlan().Tasks = append(myAgent.GetPlan().Tasks, newTask)
 
-		// Send the new task update through the SSE channel
-		go func() {
-			updates := make(chan agent.PlanUpdate, 1)
-			updates <- agent.PlanUpdate{
-				TaskID: newTask.ID,
-				Goal:   newTask.Goal,
-				State:  newTask.State,
-			}
-			close(updates)
-			// sendUpdates(updates, c)
-		}()
+		// Generate the updated plan HTML
+		planHTML := generatePlanHTML(myAgent.GetPlan())
 
-		// Return the response to be displayed in the message list
-		return c.HTML(http.StatusOK, fmt.Sprintf(`<div class="bg-zinc-900 rounded p-3 mb-4 inline-block">%s</div>`, response))
-	})
+		// Return both the message, response, and the updated plan
+		htmlResponse := fmt.Sprintf(`
+			<div class="bg-zinc-900 rounded p-3 inline-block mb-2">%s</div>
+			<div class="bg-zinc-800 rounded p-3 inline-block">%s</div>
+			<div id="plan-display" hx-swap-oob="true">%s</div>
+		`, message, response, planHTML)
+
+		return c.HTML(http.StatusOK, htmlResponse)
+	});
 
 	e.POST("/replay", func(c echo.Context) error {
 		// Clear existing tasks and generate new plan
@@ -400,4 +427,32 @@ func (t *TemplRenderer) Render(w io.Writer, name string, data interface{}, c ech
 func generateTaskListHTML(update agent.PlanUpdate) string {
 	return fmt.Sprintf(`<li class="mb-2"><span class="text-blue-400 mr-2">%s.</span><span>%s</span><span class="ml-2 text-yellow-400">(%s)</span>
 </li>`, update.TaskID, update.Goal, update.State)
+}
+
+func generatePlanHTML(plan *agent.Plan) string {
+	var taskListHTML strings.Builder
+	for _, task := range plan.Tasks {
+		stateClass := "text-yellow-400"
+		switch task.State {
+		case "completed":
+			stateClass = "text-green-400"
+		case "in_progress":
+			stateClass = "text-blue-400"
+		}
+		taskListHTML.WriteString(fmt.Sprintf(`
+			<li class="flex justify-between items-center mb-2">
+				<span class="text-white">%s</span>
+				<span class="%s">%s</span>
+			</li>
+		`, task.Goal, stateClass, task.State))
+	}
+	
+	return fmt.Sprintf(`
+		<h3 class="text-lg font-bold mb-2">Main Goal:</h3>
+		<p class="mb-4 text-white">%s</p>
+		<h3 class="text-lg font-bold mb-2">Tasks:</h3>
+		<ul class="list-none pl-0 space-y-2">
+			%s
+		</ul>
+	`, plan.MainGoal, taskListHTML.String())
 }

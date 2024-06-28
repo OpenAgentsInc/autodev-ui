@@ -9,9 +9,10 @@ import (
 )
 
 type Config struct {
-	GreptileApiKey string
-	GithubToken    string
-	LLM            llm.LLM
+	GreptileApiKey  string
+	GithubToken     string
+	AnthropicAPIKey string
+	LLM             llm.LLM
 }
 
 func LoadConfig() (*Config, error) {
@@ -21,8 +22,9 @@ func LoadConfig() (*Config, error) {
 	}
 
 	config := &Config{
-		GreptileApiKey: os.Getenv("GREPTILE_API_KEY"),
-		GithubToken:    os.Getenv("GITHUB_TOKEN"),
+		AnthropicAPIKey: os.Getenv("ANTHROPIC_API_KEY"),
+		GreptileApiKey:  os.Getenv("GREPTILE_API_KEY"),
+		GithubToken:     os.Getenv("GITHUB_TOKEN"),
 	}
 
 	if config.GreptileApiKey == "" || config.GithubToken == "" {
