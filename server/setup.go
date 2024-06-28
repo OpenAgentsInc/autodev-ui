@@ -27,6 +27,12 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 	cssVersion := fmt.Sprintf("v=%d", time.Now().Unix())
 
 	e.GET("/", func(c echo.Context) error {
+		return c.Render(http.StatusOK, "index", map[string]interface{}{
+			"CssVersion": cssVersion,
+		})
+	})
+
+	e.GET("/repos", func(c echo.Context) error {
 		repo := c.QueryParam("repo")
 		data := map[string]interface{}{
 			"CssVersion": cssVersion,
@@ -60,7 +66,7 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 			}
 		}
 
-		return c.Render(http.StatusOK, "index", data)
+		return c.Render(http.StatusOK, "repos", data)
 	})
 
 	e.GET("/explorer", func(c echo.Context) error {
@@ -285,7 +291,9 @@ func (t *TemplRenderer) Render(w io.Writer, name string, data interface{}, c ech
 
 	switch name {
 	case "index":
-		return views.Index(cssVersion, viewContext).Render(context.Background(), w)
+		return views.Index(cssVersion).Render(context.Background(), w)
+	case "repos":
+		return views.Repos(cssVersion, viewContext).Render(context.Background(), w)
 	case "greptile":
 		return views.Greptile(cssVersion).Render(context.Background(), w)
 	case "file_explorer_widget":
