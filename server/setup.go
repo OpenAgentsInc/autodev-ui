@@ -30,12 +30,7 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 	// Create a new agent with a hardcoded plan
 	initialPlan := agent.NewPlan(
 		"We are cloning OpenDevin, a web UI for managing semi-autonomous AI coding agents that implements the CodeAct paper. Their codebase is in Python and we are converting it to Golang.",
-		[]*agent.Task{
-			{ID: "1", Goal: "Set up project structure", State: "open"},
-			{ID: "2", Goal: "Implement basic UI components", State: "open"},
-			{ID: "3", Goal: "Develop agent communication system", State: "open"},
-			{ID: "4", Goal: "Integrate CodeAct functionality", State: "open"},
-		},
+		[]*agent.Task{},
 	)
 	myAgent := agent.NewAgent(initialPlan)
 
@@ -44,6 +39,25 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 			"CssVersion": cssVersion,
 			"Agent":      myAgent,
 		})
+	})
+
+	e.GET("/plan-updates", func(c echo.Context) error {
+		c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
+		c.Response().Header().Set(echo.HeaderCacheControl, "no-cache")
+		c.Response().Header().Set(echo.HeaderConnection, "keep-alive")
+		c.Response().WriteHeader(http.StatusOK)
+
+		updates := myAgent.GenerateDemoPlan()
+		for update := range updates {
+			taskListHTML := generateTaskListHTML(update)
+
+			if _, err := c.Response().Write([]byte(fmt.Sprintf("data: %s\n\n", taskListHTML))); err != nil {
+				return err
+			}
+			c.Response().Flush()
+		}
+
+		return nil
 	})
 
 	e.GET("/repos", func(c echo.Context) error {
@@ -343,4 +357,9 @@ func (t *TemplRenderer) Render(w io.Writer, name string, data interface{}, c ech
 	default:
 		return fmt.Errorf("unknown template: %s", name)
 	}
+}
+
+func generateTaskListHTML(update agent.PlanUpdate) string {
+	return fmt.Sprintf(`<li class="mb-2"><span class="text-blue-400 mr-2">%s.</span><span>%s</span><span class="ml-2 text-yellow-400">(%s)</span>
+</li>`, update.TaskID, update.Goal, update.State)
 }
