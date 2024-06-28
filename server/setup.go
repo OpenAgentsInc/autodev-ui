@@ -12,10 +12,27 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/openagentsinc/autodev/config"
+	"github.com/openagentsinc/autodev/pkg/action"
+	"github.com/openagentsinc/autodev/pkg/agent"
+	"github.com/openagentsinc/autodev/pkg/plugin"
 	"github.com/openagentsinc/autodev/pkg/wanix/githubfs"
 	"github.com/openagentsinc/autodev/plugins"
 	"github.com/openagentsinc/autodev/views"
 )
+
+type ConversationEntry struct {
+	Role    string
+	Content string
+}
+
+type AgentController struct {
+	Agent   agent.Agent
+	Actions action.ActionManager
+}
+
+func (ac *AgentController) ActionManager() action.ActionManager {
+	return ac.Actions
+}
 
 func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 	e := echo.New()
@@ -23,6 +40,43 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 	e.Use(middleware.Recover())
 	e.Renderer = &TemplRenderer{}
 	e.Static("/static", "static")
+
+	conversation := make([]ConversationEntry, 0)
+	pluginReqs := []plugin.PluginRequirement{
+		// Add your plugin requirements here, for example:
+		// {Name: "example-plugin", Version: "1.0.0"},
+	}
+	agentCtrl := &AgentController{
+		Agent:   agent.NewBaseAgent(cfg.LLM, pluginReqs), // Assuming you have a NewCodeActAgent function
+		Actions: action.NewActionManager(),               // Assuming you have a NewActionManager function
+	}
+
+	e.GET("/agent/test", func(c echo.Context) error {
+		return c.Render(http.StatusOK, "agent_test", conversation)
+	})
+
+	e.POST("/agent/interact", func(c echo.Context) error {
+		message := c.FormValue("message")
+		conversation = append(conversation, ConversationEntry{Role: "user", Content: message})
+
+		// Create a new state for each interaction
+		state := agent.NewState(message)
+
+		// Get the next action from the agent
+		nextAction := agentCtrl.Agent.Step(state)
+
+		// Execute the action
+		obs, err := nextAction.Run(agentCtrl)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+
+		// Add the agent's response to the conversation
+		agentResponse := obs.GetContent()
+		conversation = append(conversation, ConversationEntry{Role: "agent", Content: agentResponse})
+
+		return c.Render(http.StatusOK, "conversation_update", ConversationEntry{Role: "agent", Content: agentResponse})
+	})
 
 	cssVersion := fmt.Sprintf("v=%d", time.Now().Unix())
 
@@ -276,6 +330,8 @@ type TemplRenderer struct{}
 
 func (t *TemplRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
 	viewContext, ok := data.(map[string]interface{})
+	ctx := context.Background()
+
 	if !ok {
 		return fmt.Errorf("invalid data type for rendering")
 	}
@@ -287,6 +343,18 @@ func (t *TemplRenderer) Render(w io.Writer, name string, data interface{}, c ech
 		return views.Index(cssVersion, viewContext).Render(context.Background(), w)
 	case "greptile":
 		return views.Greptile(cssVersion).Render(context.Background(), w)
+	case "agent_test":
+		conversation, ok := data.([]ConversationEntry)
+		if !ok {
+			return fmt.Errorf("unexpected data type for agent_test template")
+		}
+		return views.AgentTest(conversation).Render(ctx, w)
+	case "conversation_update":
+		entry, ok := data.(ConversationEntry)
+		if !ok {
+			return fmt.Errorf("unexpected data type for conversation_update template")
+		}
+		return views.ConversationUpdate(entry).Render(ctx, w)
 	case "file_explorer_widget":
 		repo, _ := viewContext["Repo"].(string)
 		branches, _ := viewContext["Branches"].([]string)

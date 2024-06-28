@@ -1,0 +1,56 @@
+package views
+
+type ConversationEntry struct {
+	Role    string
+	Content string
+}
+
+templ AgentTest(conversation []ConversationEntry) {
+	<html>
+		<head>
+			<title>AutoDev Agent Test</title>
+			<script src="https://unpkg.com/htmx.org@1.9.2"></script>
+			<link href="/static/css/output.css" rel="stylesheet"/>
+		</head>
+		<body class="bg-gray-100 text-gray-900 font-sans">
+			<div class="container mx-auto px-4 py-8">
+				<h1 class="text-3xl font-bold mb-6">AutoDev Agent Test</h1>
+				<div id="conversation" class="bg-white rounded-lg shadow-md p-4 mb-6 h-96 overflow-y-auto">
+					for _, entry := range conversation {
+						if entry.Role == "user" {
+							<div class="mb-4">
+								<span class="font-bold text-blue-600">User:</span>
+								<p class="ml-4">{ entry.Content }</p>
+							</div>
+						} else {
+							<div class="mb-4">
+								<span class="font-bold text-green-600">Agent:</span>
+								<p class="ml-4">{ entry.Content }</p>
+							</div>
+						}
+					}
+				</div>
+				<form hx-post="/agent/interact" hx-target="#conversation" hx-swap="beforeend">
+					<div class="flex">
+						<input type="text" name="message" placeholder="Enter your message or command" class="flex-grow px-4 py-2 rounded-l-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+						<button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">Send</button>
+					</div>
+				</form>
+			</div>
+		</body>
+	</html>
+}
+
+templ ConversationUpdate(entry ConversationEntry) {
+	if entry.Role == "user" {
+		<div class="mb-4">
+			<span class="font-bold text-blue-600">User:</span>
+			<p class="ml-4">{ entry.Content }</p>
+		</div>
+	} else {
+		<div class="mb-4">
+			<span class="font-bold text-green-600">Agent:</span>
+			<p class="ml-4">{ entry.Content }</p>
+		</div>
+	}
+}

@@ -5,11 +5,13 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/openagentsinc/autodev/pkg/llm"
 )
 
 type Config struct {
 	GreptileApiKey string
 	GithubToken    string
+	LLM            llm.LLM
 }
 
 func LoadConfig() (*Config, error) {

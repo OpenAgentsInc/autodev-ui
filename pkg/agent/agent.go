@@ -3,8 +3,8 @@ package agent
 import (
 	"github.com/openagentsinc/autodev/pkg/action"
 	"github.com/openagentsinc/autodev/pkg/llm"
+	"github.com/openagentsinc/autodev/pkg/plugin"
 	"github.com/openagentsinc/autodev/pkg/state"
-	"github.com/openagentsinc/autodev/plugins"
 )
 
 // Agent defines the interface for all agent implementations
@@ -26,11 +26,11 @@ type Agent interface {
 type BaseAgent struct {
 	llm        llm.LLM
 	complete   bool
-	sandboxReq []plugins.PluginRequirement
+	sandboxReq []plugin.PluginRequirement
 }
 
 // NewBaseAgent creates a new BaseAgent
-func NewBaseAgent(l llm.LLM, req []plugins.PluginRequirement) *BaseAgent {
+func NewBaseAgent(l llm.LLM, req []plugin.PluginRequirement) *BaseAgent {
 	return &BaseAgent{
 		llm:        l,
 		complete:   false,

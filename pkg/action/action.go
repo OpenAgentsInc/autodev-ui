@@ -1,7 +1,6 @@
 package action
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/openagentsinc/autodev/pkg/observation"
