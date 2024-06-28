@@ -10,49 +10,49 @@ templ Index(cssVersion string, myAgent *agent.Agent) {
 		</head>
 		<body class="bg-black text-white font-mono h-screen flex">
 			<!-- Left Sidebar -->
-			<div class="w-64 bg-gray-900 p-4 flex flex-col">
+			<div class="w-64 bg-black p-4 flex flex-col border-r border-zinc-800">
 				<div class="flex items-center mb-8">
 					<span class="text-2xl font-bold">🚀 AutoDev</span>
 				</div>
 				<div class="flex-grow"></div>
 				<div class="space-y-2">
-					<button class="w-full text-left py-2 px-4 rounded hover:bg-gray-800">About us</button>
-					<button class="w-full text-left py-2 px-4 rounded hover:bg-gray-800">Request access</button>
-					<button class="w-full text-left py-2 px-4 rounded hover:bg-gray-800">Login</button>
+					<button class="w-full text-left py-2 px-4 rounded hover:bg-zinc-900">About us</button>
+					<button class="w-full text-left py-2 px-4 rounded hover:bg-zinc-900">Request access</button>
+					<button class="w-full text-left py-2 px-4 rounded hover:bg-zinc-900">Login</button>
 				</div>
 			</div>
 			<!-- Main Content Area -->
 			<div class="flex-grow flex">
 				<!-- Message List -->
-				<div class="w-1/2 flex flex-col bg-gray-800">
+				<div class="w-1/2 flex flex-col bg-black border-r border-zinc-800">
 					<div class="flex-grow p-4 overflow-y-auto">
-						<div class="bg-gray-700 rounded p-3 mb-4 inline-block">
+						<div class="bg-zinc-900 rounded p-3 mb-4 inline-block">
 							AutoDev awaiting instructions.
 						</div>
 						<!-- Add more message bubbles here as needed -->
 					</div>
-					<div class="p-4 border-t border-gray-700">
-						<input type="text" placeholder="Type your message..." class="w-full bg-gray-700 text-white rounded p-2"/>
+					<div class="p-4 border-t border-zinc-800">
+						<input type="text" placeholder="Type your message..." class="w-full bg-zinc-900 text-white rounded p-2"/>
 					</div>
 				</div>
 				<!-- Right Sidebar -->
-				<div class="w-1/2 bg-gray-900 p-4 flex flex-col">
+				<div class="w-1/2 bg-black p-4 flex flex-col">
 					<div class="flex justify-between items-center mb-4">
 						<h2 class="text-xl font-bold">AutoDev's Workspace</h2>
 						<div class="flex items-center space-x-2">
 							<span>Following</span>
-							<div class="w-12 h-6 bg-gray-700 rounded-full p-1 cursor-pointer">
+							<div class="w-12 h-6 bg-zinc-800 rounded-full p-1 cursor-pointer">
 								<div class="w-4 h-4 bg-blue-500 rounded-full"></div>
 							</div>
 						</div>
 					</div>
 					<div class="flex space-x-4 mb-4">
-						<button class="px-3 py-1 rounded hover:bg-gray-800">Shell</button>
-						<button class="px-3 py-1 rounded hover:bg-gray-800">Browser</button>
-						<button class="px-3 py-1 rounded hover:bg-gray-800">Editor</button>
-						<button class="px-3 py-1 bg-gray-700 rounded font-bold">Planner</button>
+						<button class="px-3 py-1 rounded hover:bg-zinc-900">Shell</button>
+						<button class="px-3 py-1 rounded hover:bg-zinc-900">Browser</button>
+						<button class="px-3 py-1 rounded hover:bg-zinc-900">Editor</button>
+						<button class="px-3 py-1 bg-zinc-800 rounded font-bold">Planner</button>
 					</div>
-					<div class="flex-grow bg-gray-800 rounded p-4 mb-4 overflow-y-auto">
+					<div class="flex-grow bg-zinc-900 rounded p-4 mb-4 overflow-y-auto">
 						<h3 class="text-lg font-bold mb-2">Main Goal:</h3>
 						<p class="mb-4">{ myAgent.GetPlan().MainGoal }</p>
 						<h3 class="text-lg font-bold mb-2">Tasks:</h3>
@@ -67,8 +67,8 @@ templ Index(cssVersion string, myAgent *agent.Agent) {
 						</ul>
 					</div>
 					<div class="flex justify-between">
-						<button class="px-3 py-1 rounded hover:bg-gray-800">⏮</button>
-						<button class="px-3 py-1 rounded hover:bg-gray-800">⏭</button>
+						<button class="px-3 py-1 rounded hover:bg-zinc-900">⏮</button>
+						<button class="px-3 py-1 rounded hover:bg-zinc-900">⏭</button>
 					</div>
 				</div>
 			</div>
