@@ -35,17 +35,22 @@ type LLM struct {
 	Model  string
 }
 
-func NewLLM(apiKey string, model string) *LLM {
-	if model == "" {
-		model = DefaultModel
+func NewLLM(apiKey string) (*LLM, error) {
+	if apiKey == "" {
+		return nil, fmt.Errorf("API key is required")
 	}
 	return &LLM{
 		APIKey: apiKey,
-		Model:  model,
-	}
+	}, nil
 }
 
 func (l *LLM) GenerateResponse(messages []Message, maxTokens int) (string, error) {
+	// Implement the logic to call the Anthropic API and generate a response
+	// This is a placeholder implementation
+	return "This is a placeholder response from the LLM", nil
+}
+
+func (l *LLM) GenerateResponse2(messages []Message, maxTokens int) (string, error) {
 	if l.APIKey == "" {
 		l.APIKey = os.Getenv("ANTHROPIC_API_KEY")
 		if l.APIKey == "" {

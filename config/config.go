@@ -31,5 +31,17 @@ func LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("GREPTILE_API_KEY and GITHUB_TOKEN must be set")
 	}
 
+	if config.AnthropicAPIKey == "" {
+		return nil, fmt.Errorf("ANTHROPIC_API_KEY must be set")
+	}
+
+	// Initialize the LLM
+	llmClient, err := llm.NewLLM(config.AnthropicAPIKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize LLM: %w", err)
+	}
+	config.LLM = llmClient
+
 	return config, nil
 }
+
