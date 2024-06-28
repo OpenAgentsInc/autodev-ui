@@ -60,6 +60,7 @@ templ Index(cssVersion string, myAgent *agent.Agent) {
 						<h3 class="text-lg font-bold mb-2">Tasks:</h3>
 						<div class="h-full overflow-y-auto">
 							<ul
+								id="task-list"
 								hx-ext="sse"
 								hx-swap="beforeend"
 								sse-connect="/plan-updates"
@@ -70,7 +71,7 @@ templ Index(cssVersion string, myAgent *agent.Agent) {
 					</div>
 					<div class="flex justify-between">
 						<button
-							hx-get="/plan-updates"
+							hx-post="/replay"
 							hx-trigger="click"
 							hx-target="#task-list"
 							hx-swap="innerHTML"

@@ -38,3 +38,7 @@ func NewAgent(plan *Plan) *Agent {
 func (a *Agent) GetPlan() *Plan {
 	return a.CurrentPlan
 }
+
+func (a *Agent) ResetPlan() {
+	a.CurrentPlan = NewPlan(a.CurrentPlan.MainGoal, []*Task{})
+}

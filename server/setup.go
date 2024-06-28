@@ -41,6 +41,12 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 		})
 	})
 
+	e.POST("/replay", func(c echo.Context) error {
+		// Clear existing tasks and generate new plan
+		myAgent.ResetPlan()
+		return c.NoContent(http.StatusOK)
+	})
+
 	e.GET("/plan-updates", func(c echo.Context) error {
 		c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
 		c.Response().Header().Set(echo.HeaderCacheControl, "no-cache")
