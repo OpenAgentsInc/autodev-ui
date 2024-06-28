@@ -5,50 +5,73 @@ import "github.com/openagentsinc/autodev/agent"
 templ Index(cssVersion string, myAgent *agent.Agent) {
 	<html>
 		<head>
-			<title>Agent Workspace</title>
+			<title>AutoDev Workspace</title>
 			<link href={ "/static/css/output.css?" + cssVersion } rel="stylesheet"/>
-			<style>
-				body {
-					background-color: black;
-					color: white;
-					font-family: monospace;
-					padding: 20px;
-					margin: 0;
-				}
-				h1, h2 {
-					color: #00ff00;
-				}
-				ul {
-					list-style-type: none;
-					padding-left: 20px;
-				}
-				li {
-					margin-bottom: 10px;
-				}
-				.task-id {
-					color: #ff00ff;
-					margin-right: 10px;
-				}
-				.task-state {
-					color: #ffff00;
-					margin-left: 10px;
-				}
-			</style>
 		</head>
-		<body>
-			<h1>Agent Workspace</h1>
-			<h2>Main Goal:</h2>
-			<p>{ myAgent.GetPlan().MainGoal }</p>
-			<h2>Tasks:</h2>
-			<ul>
-				for _, task := range myAgent.GetPlan().Tasks {
-					<li>
-						<span class="task-id">{ task.ID }</span>
-						{ task.Goal }
-						<span class="task-state">{ task.State }</span>
-					</li>
-				}
-			</ul>
+		<body class="bg-black text-white font-mono h-screen flex">
+			<!-- Left Sidebar -->
+			<div class="w-64 bg-gray-900 p-4 flex flex-col">
+				<div class="flex items-center mb-8">
+					<span class="text-2xl font-bold">🚀 AutoDev</span>
+				</div>
+				<div class="flex-grow"></div>
+				<div class="space-y-2">
+					<button class="w-full text-left py-2 px-4 rounded hover:bg-gray-800">About us</button>
+					<button class="w-full text-left py-2 px-4 rounded hover:bg-gray-800">Request access</button>
+					<button class="w-full text-left py-2 px-4 rounded hover:bg-gray-800">Login</button>
+				</div>
+			</div>
+			<!-- Main Content Area -->
+			<div class="flex-grow flex">
+				<!-- Message List -->
+				<div class="w-1/2 flex flex-col bg-gray-800">
+					<div class="flex-grow p-4 overflow-y-auto">
+						<div class="bg-gray-700 rounded p-3 mb-4 inline-block">
+							AutoDev awaiting instructions.
+						</div>
+						<!-- Add more message bubbles here as needed -->
+					</div>
+					<div class="p-4 border-t border-gray-700">
+						<input type="text" placeholder="Type your message..." class="w-full bg-gray-700 text-white rounded p-2"/>
+					</div>
+				</div>
+				<!-- Right Sidebar -->
+				<div class="w-1/2 bg-gray-900 p-4 flex flex-col">
+					<div class="flex justify-between items-center mb-4">
+						<h2 class="text-xl font-bold">AutoDev's Workspace</h2>
+						<div class="flex items-center space-x-2">
+							<span>Following</span>
+							<div class="w-12 h-6 bg-gray-700 rounded-full p-1 cursor-pointer">
+								<div class="w-4 h-4 bg-blue-500 rounded-full"></div>
+							</div>
+						</div>
+					</div>
+					<div class="flex space-x-4 mb-4">
+						<button class="px-3 py-1 rounded hover:bg-gray-800">Shell</button>
+						<button class="px-3 py-1 rounded hover:bg-gray-800">Browser</button>
+						<button class="px-3 py-1 rounded hover:bg-gray-800">Editor</button>
+						<button class="px-3 py-1 bg-gray-700 rounded font-bold">Planner</button>
+					</div>
+					<div class="flex-grow bg-gray-800 rounded p-4 mb-4 overflow-y-auto">
+						<h3 class="text-lg font-bold mb-2">Main Goal:</h3>
+						<p class="mb-4">{ myAgent.GetPlan().MainGoal }</p>
+						<h3 class="text-lg font-bold mb-2">Tasks:</h3>
+						<ul class="list-none pl-0">
+							for _, task := range myAgent.GetPlan().Tasks {
+								<li class="mb-2">
+									<span class="text-blue-400 mr-2">{ task.ID }.</span>
+									<span>{ task.Goal }</span>
+									<span class="ml-2 text-yellow-400">({ task.State })</span>
+								</li>
+							}
+						</ul>
+					</div>
+					<div class="flex justify-between">
+						<button class="px-3 py-1 rounded hover:bg-gray-800">⏮</button>
+						<button class="px-3 py-1 rounded hover:bg-gray-800">⏭</button>
+					</div>
+				</div>
+			</div>
 		</body>
 	</html>
 }
