@@ -11,6 +11,7 @@ import (
 	"github.com/extism/go-sdk"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/openagentsinc/autodev/agent"
 	"github.com/openagentsinc/autodev/config"
 	"github.com/openagentsinc/autodev/pkg/wanix/githubfs"
 	"github.com/openagentsinc/autodev/plugins"
@@ -26,9 +27,22 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 
 	cssVersion := fmt.Sprintf("v=%d", time.Now().Unix())
 
+	// Create a new agent with a hardcoded plan
+	initialPlan := agent.NewPlan(
+		"We are cloning OpenDevin, a web UI for managing semi-autonomous AI coding agents that implements the CodeAct paper. Their codebase is in Python and we are converting it to Golang.",
+		[]*agent.Task{
+			{ID: "1", Goal: "Set up project structure", State: "open"},
+			{ID: "2", Goal: "Implement basic UI components", State: "open"},
+			{ID: "3", Goal: "Develop agent communication system", State: "open"},
+			{ID: "4", Goal: "Integrate CodeAct functionality", State: "open"},
+		},
+	)
+	myAgent := agent.NewAgent(initialPlan)
+
 	e.GET("/", func(c echo.Context) error {
 		return c.Render(http.StatusOK, "index", map[string]interface{}{
 			"CssVersion": cssVersion,
+			"Agent":      myAgent,
 		})
 	})
 
@@ -288,10 +302,11 @@ func (t *TemplRenderer) Render(w io.Writer, name string, data interface{}, c ech
 	}
 
 	cssVersion, _ := viewContext["CssVersion"].(string)
+	myAgent, _ := viewContext["Agent"].(*agent.Agent)
 
 	switch name {
 	case "index":
-		return views.Index(cssVersion).Render(context.Background(), w)
+		return views.Index(cssVersion, myAgent).Render(context.Background(), w)
 	case "repos":
 		return views.Repos(cssVersion, viewContext).Render(context.Background(), w)
 	case "greptile":

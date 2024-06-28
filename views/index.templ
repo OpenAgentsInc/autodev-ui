@@ -1,6 +1,8 @@
 package views
 
-templ Index(cssVersion string) {
+import "github.com/openagentsinc/autodev/agent"
+
+templ Index(cssVersion string, myAgent *agent.Agent) {
 	<html>
 		<head>
 			<title>Agent Workspace</title>
@@ -10,18 +12,43 @@ templ Index(cssVersion string) {
 					background-color: black;
 					color: white;
 					font-family: monospace;
-					display: flex;
-					justify-content: center;
-					align-items: center;
-					height: 100vh;
+					padding: 20px;
 					margin: 0;
+				}
+				h1, h2 {
+					color: #00ff00;
+				}
+				ul {
+					list-style-type: none;
+					padding-left: 20px;
+				}
+				li {
+					margin-bottom: 10px;
+				}
+				.task-id {
+					color: #ff00ff;
+					margin-right: 10px;
+				}
+				.task-state {
+					color: #ffff00;
+					margin-left: 10px;
 				}
 			</style>
 		</head>
 		<body>
-			<div>
-				Agent Workspace
-			</div>
+			<h1>Agent Workspace</h1>
+			<h2>Main Goal:</h2>
+			<p>{ myAgent.GetPlan().MainGoal }</p>
+			<h2>Tasks:</h2>
+			<ul>
+				for _, task := range myAgent.GetPlan().Tasks {
+					<li>
+						<span class="task-id">{ task.ID }</span>
+						{ task.Goal }
+						<span class="task-state">{ task.State }</span>
+					</li>
+				}
+			</ul>
 		</body>
 	</html>
 }
