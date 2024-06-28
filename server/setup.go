@@ -41,6 +41,38 @@ func SetupServer(cfg *config.Config, extismPlugin *extism.Plugin) *echo.Echo {
 		})
 	})
 
+	e.POST("/submit-message", func(c echo.Context) error {
+		message := c.FormValue("message")
+
+		// TODO: Process the message using an LLM
+		// For now, we'll just echo the message back
+		response := fmt.Sprintf("Received: %s", message)
+
+		// TODO: Update the agent's plan based on the LLM's analysis
+		// For now, we'll just add a dummy task
+		newTask := agent.Task{
+			ID:    fmt.Sprintf("%d", len(myAgent.GetPlan().Tasks)+1),
+			Goal:  fmt.Sprintf("New task based on: %s", message),
+			State: "open",
+		}
+		myAgent.GetPlan().Tasks = append(myAgent.GetPlan().Tasks, &newTask)
+
+		// Send the new task update through the SSE channel
+		go func() {
+			updates := make(chan agent.PlanUpdate, 1)
+			updates <- agent.PlanUpdate{
+				TaskID: newTask.ID,
+				Goal:   newTask.Goal,
+				State:  newTask.State,
+			}
+			close(updates)
+			// sendUpdates(updates, c)
+		}()
+
+		// Return the response to be displayed in the message list
+		return c.HTML(http.StatusOK, fmt.Sprintf(`<div class="bg-zinc-900 rounded p-3 mb-4 inline-block">%s</div>`, response))
+	})
+
 	e.POST("/replay", func(c echo.Context) error {
 		// Clear existing tasks and generate new plan
 		myAgent.ResetPlan()

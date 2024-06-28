@@ -27,15 +27,15 @@ templ Index(cssVersion string, myAgent *agent.Agent) {
 			<div class="flex-grow flex">
 				<!-- Message List -->
 				<div class="w-1/2 flex flex-col bg-black border-r border-zinc-800">
-					<div class="flex-grow p-4 overflow-y-auto">
+					<div id="message-list" class="flex-grow p-4 overflow-y-auto">
 						<div class="bg-zinc-900 rounded p-3 mb-4 inline-block">
 							AutoDev awaiting instructions.
 						</div>
-						<!-- Add more message bubbles here as needed -->
+						<!-- New messages will be added here -->
 					</div>
-					<div class="p-4 border-t border-zinc-800">
-						<input type="text" placeholder="Type your message..." class="w-full bg-zinc-900 text-white rounded p-2"/>
-					</div>
+					<form id="message-form" class="p-4 border-t border-zinc-800" hx-post="/submit-message" hx-target="#message-list" hx-swap="beforeend">
+						<input type="text" name="message" placeholder="Type your message..." class="w-full bg-zinc-900 text-white rounded p-2"/>
+					</form>
 				</div>
 				<!-- Right Sidebar -->
 				<div class="w-1/2 bg-black p-4 flex flex-col">
@@ -62,7 +62,6 @@ templ Index(cssVersion string, myAgent *agent.Agent) {
 							<ul
 								id="task-list"
 								hx-ext="sse"
-								hx-swap="beforeend"
 								sse-connect="/plan-updates"
 								sse-swap="message"
 								class="list-none pl-0 space-y-2"
@@ -81,6 +80,9 @@ templ Index(cssVersion string, myAgent *agent.Agent) {
 					</div>
 				</div>
 			</div>
+			<script>
+				// ... (previous JavaScript code remains unchanged)
+			</script>
 		</body>
 	</html>
 }
