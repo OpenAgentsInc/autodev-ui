@@ -9,12 +9,6 @@ templ Index(cssVersion string, myAgent *agent.Agent) {
 			<title>AutoDev Workspace</title>
 			<link href={ "/static/css/output.css?" + cssVersion } rel="stylesheet"/>
 			<script src="https://unpkg.com/htmx.org@2.0.0" integrity="sha384-wS5l5IKJBvK6sPTKa2WZ1js3d947pvWXbPJ1OmWfEuxLgeHcEbjUUA5i9V5ZkpCw" crossorigin="anonymous"></script>
-			<style>
-  .tab-content {
-    max-width: 100%;
-    overflow-x: auto;
-  }
-</style>
 			<script>
 				function addUserMessage(event) {
 					var messageInput = event.target.querySelector('input[name="message"]');
@@ -99,18 +93,18 @@ templ Index(cssVersion string, myAgent *agent.Agent) {
 						</div>
 					</div>
 					<div class="flex space-x-4 mb-4">
-						<button id="planner-button" class="tab-button px-3 py-1 rounded bg-zinc-800 font-bold" onclick="switchTab('planner')">Planner</button>
 						<button id="shell-button" class="tab-button px-3 py-1 rounded hover:bg-zinc-900" onclick="switchTab('shell')">Shell</button>
 						<button id="browser-button" class="tab-button px-3 py-1 rounded hover:bg-zinc-900" onclick="switchTab('browser')">Browser</button>
 						<button id="editor-button" class="tab-button px-3 py-1 rounded hover:bg-zinc-900" onclick="switchTab('editor')">Editor</button>
+						<button id="planner-button" class="tab-button px-3 py-1 rounded bg-zinc-800 font-bold" onclick="switchTab('planner')">Planner</button>
 						<button id="codebases-button" class="tab-button px-3 py-1 rounded hover:bg-zinc-900" onclick="switchTab('codebases')">Codebases</button>
 					</div>
-					<div class="flex-grow bg-zinc-900 rounded p-4 mb-4 overflow-hidden">
-						<div class="w-[600px] h-full overflow-y-auto">
-							@tabs.PlannerTab(myAgent)
+					<div class="flex-grow bg-zinc-900 rounded mb-4 overflow-hidden">
+						<div class="w-[650px] h-full overflow-y-auto">
 							@tabs.ShellTab()
 							@tabs.BrowserTab()
 							@tabs.EditorTab()
+							@tabs.PlannerTab(myAgent)
 							@tabs.CodebasesTab()
 						</div>
 					</div>
