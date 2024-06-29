@@ -82,6 +82,12 @@ func (l *LLM) Completion(messages []map[string]string, stop []string) (*Completi
 	}, nil
 }
 
+func (l *LLM) GenerateResponse(messages []Message, maxTokens int) (string, error) {
+	// Implement the logic to call the Anthropic API and generate a response
+	// This is a placeholder implementation
+	return "This is a placeholder response from the LLM", nil
+}
+
 // generateDummyResponse creates a simple response based on the input
 func generateDummyResponse(input string) string {
 	lowercaseInput := strings.ToLower(input)

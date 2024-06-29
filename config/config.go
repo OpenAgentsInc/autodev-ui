@@ -5,14 +5,14 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
-	"github.com/openagentsinc/autodev/pkg/llm"
+	"github.com/openagentsinc/autodev/llm"
 )
 
 type Config struct {
 	GreptileApiKey  string
 	GithubToken     string
 	AnthropicAPIKey string
-	LLM             llm.LLM
+	LLM             *llm.LLM
 }
 
 func LoadConfig() (*Config, error) {
@@ -38,10 +38,10 @@ func LoadConfig() (*Config, error) {
 	// Initialize the LLM
 	llmClient, err := llm.NewLLM(config.AnthropicAPIKey)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize LLM: %w", err)
+		return nil, err
 	}
+
 	config.LLM = llmClient
 
 	return config, nil
 }
-
