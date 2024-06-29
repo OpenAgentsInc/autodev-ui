@@ -42,10 +42,9 @@ func HandleSubmitMessage(cfg *config.Config, myAgent *agent.Agent) echo.HandlerF
 		planHTML := generatePlanHTML(myAgent.GetPlan())
 
 		htmlResponse := fmt.Sprintf(`
-			<div class="bg-zinc-900 rounded p-3 inline-block mb-2">%s</div>
 			<div class="bg-zinc-800 rounded p-3 inline-block">%s</div>
 			<div id="plan-display" hx-swap-oob="true">%s</div>
-		`, message, response, planHTML)
+		`, response, planHTML)
 
 		return c.HTML(http.StatusOK, htmlResponse)
 	}

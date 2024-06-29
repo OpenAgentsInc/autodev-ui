@@ -8,6 +8,18 @@ templ Index(cssVersion string, myAgent *agent.Agent) {
 			<title>AutoDev Workspace</title>
 			<link href={ "/static/css/output.css?" + cssVersion } rel="stylesheet"/>
 			<script src="https://unpkg.com/htmx.org@2.0.0" integrity="sha384-wS5l5IKJBvK6sPTKa2WZ1js3d947pvWXbPJ1OmWfEuxLgeHcEbjUUA5i9V5ZkpCw" crossorigin="anonymous"></script>
+			<script>
+				function addUserMessage(event) {
+					var messageInput = event.target.querySelector('input[name="message"]');
+					var messageList = document.getElementById('message-list');
+					var userMessage = document.createElement('div');
+					userMessage.className = 'bg-zinc-800 rounded p-3 inline-block self-end';
+					userMessage.textContent = messageInput.value;
+					messageList.appendChild(userMessage);
+					messageList.scrollTop = messageList.scrollHeight;
+					messageInput.value = '';
+				}
+			</script>
 		</head>
 		<body class="bg-black text-white font-mono h-screen flex">
 			<!-- Left Sidebar -->
@@ -38,6 +50,7 @@ templ Index(cssVersion string, myAgent *agent.Agent) {
 						hx-post="/submit-message"
 						hx-target="#message-list"
 						hx-swap="beforeend"
+						hx-on::before-request="addUserMessage(event)"
 						hx-on::after-request="this.reset()"
 					>
 						<input
