@@ -27,7 +27,9 @@ type AnthropicRequest struct {
 }
 
 type AnthropicResponse struct {
-	Content string `json:"content"`
+	Content []struct {
+		Text string `json:"text"`
+	} `json:"content"`
 }
 
 type LLM struct {
@@ -41,16 +43,11 @@ func NewLLM(apiKey string) (*LLM, error) {
 	}
 	return &LLM{
 		APIKey: apiKey,
+		Model:  DefaultModel,
 	}, nil
 }
 
 func (l *LLM) GenerateResponse(messages []Message, maxTokens int) (string, error) {
-	// Implement the logic to call the Anthropic API and generate a response
-	// This is a placeholder implementation
-	return "This is a placeholder response from the LLM", nil
-}
-
-func (l *LLM) GenerateResponse2(messages []Message, maxTokens int) (string, error) {
 	if l.APIKey == "" {
 		l.APIKey = os.Getenv("ANTHROPIC_API_KEY")
 		if l.APIKey == "" {
@@ -100,5 +97,10 @@ func (l *LLM) GenerateResponse2(messages []Message, maxTokens int) (string, erro
 		return "", fmt.Errorf("error unmarshalling response: %v", err)
 	}
 
-	return anthropicResp.Content, nil
+	if len(anthropicResp.Content) == 0 {
+		return "", fmt.Errorf("no content in response")
+	}
+
+	return anthropicResp.Content[0].Text, nil
 }
+
