@@ -1,0 +1,19 @@
+package tabs 
+
+import "github.com/openagentsinc/autodev/agent"
+
+templ PlannerTab(myAgent *agent.Agent) {
+	<div id="planner-tab" class="tab-content">
+		<h3 class="text-lg font-bold mb-2">Main Goal:</h3>
+		<p class="mb-4">{ myAgent.GetPlan().MainGoal }</p>
+		<h3 class="text-lg font-bold mb-2">Tasks:</h3>
+		<ul class="list-none pl-0 space-y-2">
+			for _, task := range myAgent.GetPlan().Tasks {
+				<li class="flex justify-between items-center">
+					<span>{ task.Goal }</span>
+					<span class="text-sm">{ task.State }</span>
+				</li>
+			}
+		</ul>
+	</div>
+}

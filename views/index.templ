@@ -1,6 +1,7 @@
 package views
 
 import "github.com/openagentsinc/autodev/agent"
+import "github.com/openagentsinc/autodev/views/tabs"
 
 templ Index(cssVersion string, myAgent *agent.Agent) {
 	<html>
@@ -8,6 +9,12 @@ templ Index(cssVersion string, myAgent *agent.Agent) {
 			<title>AutoDev Workspace</title>
 			<link href={ "/static/css/output.css?" + cssVersion } rel="stylesheet"/>
 			<script src="https://unpkg.com/htmx.org@2.0.0" integrity="sha384-wS5l5IKJBvK6sPTKa2WZ1js3d947pvWXbPJ1OmWfEuxLgeHcEbjUUA5i9V5ZkpCw" crossorigin="anonymous"></script>
+			<style>
+  .tab-content {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+</style>
 			<script>
 				function addUserMessage(event) {
 					var messageInput = event.target.querySelector('input[name="message"]');
@@ -18,6 +25,24 @@ templ Index(cssVersion string, myAgent *agent.Agent) {
 					messageList.appendChild(userMessage);
 					messageList.scrollTop = messageList.scrollHeight;
 					messageInput.value = '';
+				}
+
+				function switchTab(tabName) {
+					// Hide all tab contents
+					document.querySelectorAll('.tab-content').forEach(tab => {
+						tab.classList.add('hidden');
+					});
+
+					// Show the selected tab content
+					document.getElementById(tabName + '-tab').classList.remove('hidden');
+
+					// Update active tab styling
+					document.querySelectorAll('.tab-button').forEach(button => {
+						button.classList.remove('bg-zinc-800', 'font-bold');
+						button.classList.add('hover:bg-zinc-900');
+					});
+					document.getElementById(tabName + '-button').classList.add('bg-zinc-800', 'font-bold');
+					document.getElementById(tabName + '-button').classList.remove('hover:bg-zinc-900');
 				}
 			</script>
 		</head>
@@ -37,7 +62,7 @@ templ Index(cssVersion string, myAgent *agent.Agent) {
 			<!-- Main Content Area -->
 			<div class="flex-grow flex">
 				<!-- Message List -->
-				<div class="w-1/2 flex flex-col bg-black">
+				<div class="w-1/2 flex-shrink-0 flex flex-col bg-black">
 					<div id="message-list" class="flex-grow p-4 overflow-y-auto flex flex-col space-y-4">
 						<div class="bg-zinc-900 rounded p-3 inline-block">
 							AutoDev awaiting instructions.
@@ -62,8 +87,8 @@ templ Index(cssVersion string, myAgent *agent.Agent) {
 						/>
 					</form>
 				</div>
-				<!-- Right Sidebar -->
-				<div class="w-1/2 bg-black p-4 flex flex-col">
+				<!-- Right Sidebar with Tabs -->
+				<div class="w-1/2 flex-shrink-0 bg-black p-4 flex flex-col">
 					<div class="flex justify-between items-center mb-4">
 						<h2 class="text-xl font-bold">AutoDev's Workspace</h2>
 						<div class="flex items-center space-x-2">
@@ -74,23 +99,20 @@ templ Index(cssVersion string, myAgent *agent.Agent) {
 						</div>
 					</div>
 					<div class="flex space-x-4 mb-4">
-						<button class="px-3 py-1 rounded hover:bg-zinc-900">Shell</button>
-						<button class="px-3 py-1 rounded hover:bg-zinc-900">Browser</button>
-						<button class="px-3 py-1 rounded hover:bg-zinc-900">Editor</button>
-						<button class="px-3 py-1 bg-zinc-800 rounded font-bold">Planner</button>
+						<button id="planner-button" class="tab-button px-3 py-1 rounded bg-zinc-800 font-bold" onclick="switchTab('planner')">Planner</button>
+						<button id="shell-button" class="tab-button px-3 py-1 rounded hover:bg-zinc-900" onclick="switchTab('shell')">Shell</button>
+						<button id="browser-button" class="tab-button px-3 py-1 rounded hover:bg-zinc-900" onclick="switchTab('browser')">Browser</button>
+						<button id="editor-button" class="tab-button px-3 py-1 rounded hover:bg-zinc-900" onclick="switchTab('editor')">Editor</button>
+						<button id="codebases-button" class="tab-button px-3 py-1 rounded hover:bg-zinc-900" onclick="switchTab('codebases')">Codebases</button>
 					</div>
-					<div id="plan-display" class="flex-grow bg-zinc-900 rounded p-4 mb-4 overflow-y-auto">
-						<h3 class="text-lg font-bold mb-2">Main Goal:</h3>
-						<p class="mb-4">{ myAgent.GetPlan().MainGoal }</p>
-						<h3 class="text-lg font-bold mb-2">Tasks:</h3>
-						<ul class="list-none pl-0 space-y-2">
-							for _, task := range myAgent.GetPlan().Tasks {
-								<li class="flex justify-between items-center">
-									<span>{ task.Goal }</span>
-									<span class="text-sm">{ task.State }</span>
-								</li>
-							}
-						</ul>
+					<div class="flex-grow bg-zinc-900 rounded p-4 mb-4 overflow-hidden">
+						<div class="w-[600px] h-full overflow-y-auto">
+							@tabs.PlannerTab(myAgent)
+							@tabs.ShellTab()
+							@tabs.BrowserTab()
+							@tabs.EditorTab()
+							@tabs.CodebasesTab()
+						</div>
 					</div>
 				</div>
 			</div>
